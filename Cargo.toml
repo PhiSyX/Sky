@@ -1,0 +1,11 @@
+[workspace]
+members = ["apps/*", "libs/crates/*"]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+sky-ui = { path = "libs/crates/sky-ui" }
+sky-ui-floem = { path = "libs/crates/sky-ui-floem" }

@@ -1,0 +1,8 @@
+[package]
+name = "sky"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+sky-ui = { workspace = true }
+sky-ui-floem = { workspace = true }

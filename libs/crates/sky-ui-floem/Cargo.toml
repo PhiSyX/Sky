@@ -1,0 +1,8 @@
+[package]
+name = "sky-ui-floem"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+sky-ui = { workspace = true }
+floem = { git = "https://github.com/SerialForker/floem.git", rev = "d87a6a1b38ff7cd90628352efa35ff7b29daaa88" }
