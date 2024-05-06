@@ -14,11 +14,11 @@ use floem::view::View;
 use floem::views::{h_stack, text_input, Decorators};
 use floem::widgets::PlaceholderTextClass;
 
-use crate::classes::align::gap::Gap8;
-use crate::colors::*;
-use crate::icons::*;
-use crate::state::{FloemApplicationStateShared, Page};
-use crate::variables::*;
+use crate::components::icons::*;
+use crate::state::{ApplicationStateShared, Page};
+use crate::styles::classes::align::gap::*;
+use crate::styles::colors::*;
+use crate::styles::variables::*;
 
 // --------- //
 // Structure //
@@ -34,13 +34,13 @@ impl URLBar
 {
 	pub fn render(&self) -> impl View
 	{
-		let state: FloemApplicationStateShared =
+		let state: ApplicationStateShared =
 			use_context().expect("État de l'application");
 
 		let url_s = create_rw_signal(String::new());
 
-		let state_r = FloemApplicationStateShared::clone(&state);
-		let state_w = FloemApplicationStateShared::clone(&state);
+		let state_r = ApplicationStateShared::clone(&state);
+		let state_w = ApplicationStateShared::clone(&state);
 
 		h_stack((
 			search_icon().class(IconWithOpacity),

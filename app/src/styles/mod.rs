@@ -8,41 +8,6 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-mod pages;
-mod theme;
-mod title;
-
-use std::sync::Arc;
-
-pub use self::pages::{Page, PagesData};
-pub use self::theme::ThemeData;
-pub use self::title::TitleData;
-
-// ---- //
-// Type //
-// ---- //
-
-pub type FloemApplicationStateShared = Arc<FloemApplicationState>;
-
-// --------- //
-// Structure //
-// --------- //
-
-pub struct FloemApplicationState
-{
-	pub pages_data: PagesData,
-	pub theme_data: ThemeData,
-	pub title_data: TitleData,
-}
-
-// -------------- //
-// Implémentation //
-// -------------- //
-
-impl FloemApplicationState
-{
-	pub fn shared(self) -> FloemApplicationStateShared
-	{
-		FloemApplicationStateShared::new(self)
-	}
-}
+pub(crate) mod classes;
+pub(crate) mod colors;
+pub(crate) mod variables;

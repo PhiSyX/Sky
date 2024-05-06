@@ -8,35 +8,41 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
+use std::process::Termination;
+
 use floem::peniko::Color;
-use floem::reactive::{provide_context, use_context};
-use floem::style::{CursorStyle, Foreground, TextColor, Transition};
-use floem::unit::UnitExt;
 use floem::view::View;
-use floem::views::{h_stack, text, v_stack, Decorators};
-use floem::window::WindowId;
+use floem::views::{h_stack, v_stack, Decorators};
+use floem::window::{WindowConfig, WindowId};
+use floem::{keyboard, reactive, style, window};
 use sky_ui::{ApplicationSettings, ThemeSettings};
 
-use crate::classes::align::gap::*;
-use crate::colors::*;
-use crate::content::MainArea;
-use crate::header::area::HeaderArea;
-use crate::icons::{Icon, IconWithOpacity};
-use crate::nav::NavigationArea;
+use crate::components::header::area::HeaderArea;
+use crate::components::icons::*;
+use crate::components::main::MainArea;
+use crate::components::nav::NavigationArea;
 use crate::state::{
-	FloemApplicationState,
-	FloemApplicationStateShared,
+	ApplicationState,
+	ApplicationStateShared,
 	PagesData,
 	ThemeData,
 	TitleData,
 };
-use crate::variables::*;
+use crate::styles::classes::align::gap::*;
+use crate::styles::colors::*;
+use crate::styles::variables::*;
 
 // --------- //
 // Structure //
 // --------- //
 
-pub struct FloemWindow
+#[derive(Debug)]
+pub struct Application
+{
+	settings: ApplicationSettings,
+}
+
+pub struct Window
 {
 	window_id: WindowId,
 	header: HeaderArea,
@@ -48,20 +54,77 @@ pub struct FloemWindow
 // Implémentation //
 // -------------- //
 
-impl FloemWindow
+impl Application
+{
+	pub fn new() -> Self
+	{
+		Self {
+			settings: ApplicationSettings::default(),
+		}
+	}
+
+	pub fn window_title(mut self, default_title: impl ToString) -> Self
+	{
+		self.settings.set_title(default_title);
+		self
+	}
+}
+
+impl Application
+{
+	#[inline(always)]
+	pub fn run(self) -> impl Termination
+	{
+		let window_settings = WindowConfig::default()
+			.size((1440.0, 800.0))
+			.title(self.settings.title())
+			// .apply_default_theme(false)
+			// .with_transparent(true)
+			.show_titlebar(false);
+
+		let window_render = |window_id| {
+			let view = Window::new(self.settings, window_id).view();
+			let view_id = view.id();
+			view
+				// NOTE: inspection
+				.on_key_up(
+					keyboard::Key::Named(keyboard::NamedKey::F11),
+					keyboard::Modifiers::empty(),
+					move |_| view_id.inspect(),
+				)
+				// NOTE: fermeture
+				.on_key_up(
+					keyboard::Key::Named(keyboard::NamedKey::Escape),
+					keyboard::Modifiers::empty(),
+					move |_| window::close_window(window_id),
+				)
+				.on_key_up(
+					keyboard::Key::Character("c".into()),
+					keyboard::Modifiers::CONTROL,
+					move |_| window::close_window(window_id),
+				)
+		};
+
+		floem::Application::new()
+			.window(window_render, Some(window_settings))
+			.run()
+	}
+}
+
+impl Window
 {
 	pub fn new(settings: ApplicationSettings, window_id: WindowId) -> Self
 	{
 		let shared_settings = settings.shared();
 
-		let state = FloemApplicationState {
+		let state = ApplicationState {
 			pages_data: PagesData::new(),
 			theme_data: ThemeData::new(shared_settings.theme()),
 			title_data: TitleData::new(shared_settings.title()),
 		};
 
-		provide_context(shared_settings);
-		provide_context(state.shared());
+		reactive::provide_context(shared_settings);
+		reactive::provide_context(state.shared());
 
 		Self {
 			window_id,
@@ -73,8 +136,8 @@ impl FloemWindow
 
 	pub fn view(&self) -> impl View
 	{
-		let state: FloemApplicationStateShared =
-			use_context().expect("État de l'application");
+		let state: ApplicationStateShared =
+			reactive::use_context().expect("État de l'application");
 
 		let header_area = self.header.render();
 		let nav_area = self.nav.render();
@@ -82,8 +145,9 @@ impl FloemWindow
 
 		v_stack((
 			header_area,
-			h_stack((nav_area, main_area))
-				.style(|style| style.flex_grow(1.0).size_pct(100.0, 100.0 - 50.0)),
+			h_stack((nav_area, main_area)).style(|style| {
+				style.flex_grow(1.0).size_pct(100.0, 100.0 - 50.0)
+			}),
 		))
 		.style(move |style| {
 			style
@@ -116,9 +180,15 @@ impl FloemWindow
 						.apply_if(state.theme_data.is_current_light(), |s| {
 							s.color(COLOR_BLACK)
 						})
-						.cursor(CursorStyle::Pointer)
-						.transition(TextColor, Transition::linear(2.0))
-						.transition(Foreground, Transition::linear(2.0))
+						.cursor(style::CursorStyle::Pointer)
+						.transition(
+							style::TextColor,
+							style::Transition::linear(2.0),
+						)
+						.transition(
+							style::Foreground,
+							style::Transition::linear(2.0),
+						)
 				})
 				.class(IconWithOpacity, |style| {
 					style
@@ -141,9 +211,15 @@ impl FloemWindow
 							},
 						)
 						.padding(space(1))
-						.cursor(CursorStyle::Pointer)
-						.transition(TextColor, Transition::linear(2.0))
-						.transition(Foreground, Transition::linear(2.0))
+						.cursor(style::CursorStyle::Pointer)
+						.transition(
+							style::TextColor,
+							style::Transition::linear(2.0),
+						)
+						.transition(
+							style::Foreground,
+							style::Transition::linear(2.0),
+						)
 				})
 		})
 	}

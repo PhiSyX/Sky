@@ -8,58 +8,39 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
+use floem::peniko::Color;
 use floem::view::View;
-use floem::views::{drag_window_area, h_stack, Decorators};
-use floem::window::WindowId;
+use floem::views::{container, img, Decorators};
 
-use super::controls::WindowControls;
-use super::title::Title;
-use super::url_bar::URLBar;
-use super::user_avatar::UserAvatar;
-use crate::classes::align::gap::Gap16;
-use crate::variables::*;
+use crate::styles::variables::*;
 
 // --------- //
 // Structure //
 // --------- //
 
-pub struct HeaderArea
-{
-	user_avatar: UserAvatar,
-	url_bar: URLBar,
-	title: Title,
-	controls: WindowControls,
-}
+pub struct UserAvatar;
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl HeaderArea
+impl UserAvatar
 {
-	pub fn new(window_id: WindowId) -> Self
-	{
-		Self {
-			user_avatar: UserAvatar,
-			url_bar: URLBar,
-			title: Title,
-			controls: WindowControls::new(window_id),
-		}
-	}
-
 	pub fn render(&self) -> impl View
 	{
-		let avatar = self.user_avatar.render();
-		let search_url_bar = self.url_bar.render();
-		let window_title =
-			drag_window_area(self.title.render()).style(|style| {
-				style.flex_grow(1.0).justify_center().items_center()
-			});
-		let window_controls = self.controls.render();
-		h_stack((avatar, search_url_bar, window_title, window_controls))
-			.class(Gap16)
-			.style(|style| {
-				style.width_full().height(space8(80)).padding(space(2))
-			})
+		// FIXME(phisyx): récupérer une image via une URL distante ou la
+		// récupérer via le profil utilisateur de l'OS.
+		let user_profile_avatar =
+			include_bytes!("../../../../assets/img/user.jpg");
+
+		container(img(move || user_profile_avatar.to_vec()).style(|style| {
+			style
+				.size(space(6), space(6))
+				.border_radius(space(6))
+				.box_shadow_color(Color::BLACK)
+				.box_shadow_blur(4)
+				.box_shadow_h_offset(2)
+				.box_shadow_v_offset(2)
+		}))
 	}
 }

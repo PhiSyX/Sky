@@ -8,33 +8,21 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::view::View;
-use floem::views::{v_stack, Decorators};
+#![feature(int_roundings)]
 
-use crate::classes::align::gap::Gap24;
-use crate::icons::*;
-use crate::variables::*;
+mod app;
+mod components;
+mod state;
+mod styles;
 
-// --------- //
-// Structure //
-// --------- //
+use self::app::Application;
 
-pub struct NavigationArea;
+// ---- //
+// Main //
+// ---- //
 
-// -------------- //
-// Implémentation //
-// -------------- //
-
-impl NavigationArea
+fn main()
 {
-	pub fn render(&self) -> impl View
-	{
-		v_stack((
-			home_icon().class(IconWithOpacity), // -- don't format please
-		))
-		.class(Gap24)
-		.style(|style| {
-			style.width(space(6)).items_center().padding_vert(space(2))
-		})
-	}
+	let app: Application = Application::new().window_title("Sky");
+	app.run();
 }

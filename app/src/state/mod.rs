@@ -8,39 +8,41 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::peniko::Color;
-use floem::view::View;
-use floem::views::{container, img, Decorators};
+mod pages;
+mod theme;
+mod title;
 
-use crate::variables::*;
+use std::sync::Arc;
+
+pub use self::pages::{Page, PagesData};
+pub use self::theme::ThemeData;
+pub use self::title::TitleData;
+
+// ---- //
+// Type //
+// ---- //
+
+pub type ApplicationStateShared = Arc<ApplicationState>;
 
 // --------- //
 // Structure //
 // --------- //
 
-pub struct UserAvatar;
+pub struct ApplicationState
+{
+	pub pages_data: PagesData,
+	pub theme_data: ThemeData,
+	pub title_data: TitleData,
+}
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl UserAvatar
+impl ApplicationState
 {
-	pub fn render(&self) -> impl View
+	pub fn shared(self) -> ApplicationStateShared
 	{
-		// FIXME(phisyx): récupérer une image via une URL distante ou la
-		// récupérer via le profil utilisateur de l'OS.
-		let user_profile_avatar =
-			include_bytes!("../../../../../assets/img/user.jpg");
-
-		container(img(move || user_profile_avatar.to_vec()).style(|style| {
-			style
-				.size(space(6), space(6))
-				.border_radius(space(6))
-				.box_shadow_color(Color::BLACK)
-				.box_shadow_blur(4)
-				.box_shadow_h_offset(2)
-				.box_shadow_v_offset(2)
-		}))
+		ApplicationStateShared::new(self)
 	}
 }

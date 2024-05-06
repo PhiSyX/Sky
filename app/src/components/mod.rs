@@ -8,43 +8,7 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use std::process::Termination;
-
-use sky_ui::ApplicationAdapter;
-
-// --------- //
-// Structure //
-// --------- //
-
-#[derive(Debug)]
-pub struct Application<A: ApplicationAdapter>
-{
-	adapter: A,
-}
-
-// -------------- //
-// Implémentation //
-// -------------- //
-
-impl<A: ApplicationAdapter> Application<A>
-{
-	pub fn new() -> Self
-	{
-		Self { adapter: A::new() }
-	}
-
-	pub fn window_title(mut self, default_title: impl ToString) -> Self
-	{
-		self.adapter.define_window_title(default_title);
-		self
-	}
-}
-
-impl<A: ApplicationAdapter + 'static> Application<A>
-{
-	#[inline(always)]
-	pub fn run(self) -> impl Termination
-	{
-		self.adapter.launch()
-	}
-}
+pub(crate) mod header;
+pub(crate) mod icons;
+pub(crate) mod main;
+pub(crate) mod nav;

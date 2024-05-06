@@ -8,17 +8,47 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-#![feature(int_roundings)]
+use floem::style_class;
 
-mod app;
-mod classes;
-mod colors;
-mod content;
-mod header;
-mod icons;
-mod nav;
-mod state;
-mod variables;
-mod window;
+// ----- //
+// MACRO //
+// ----- //
 
-pub use self::app::*;
+macro_rules! make_svg_icon {
+	(
+		$(
+			$(#[$doc:meta])*
+			$vis:vis const $constant:ident : &str = $svg:literal;
+		)*
+	) => { $(paste::paste! {
+		$(#[$doc])*
+		$vis fn [ < $constant:lower _icon > ] () -> impl floem::view::View
+		{
+			use floem::views::{Decorators, svg};
+			const $constant: &str = include_str!(concat!("../../../", $svg));
+			svg(|| $constant.to_owned())
+				.style(|style| style.size(24, 24))
+		}
+	})* };
+}
+
+// -------- //
+// Constant //
+// -------- //
+
+make_svg_icon! {
+	pub const HOME: &str = "assets/svg/home.svg";
+	pub const NOTIFICATION: &str = "assets/svg/notification.svg";
+	pub const SEARCH: &str = "assets/svg/search.svg";
+	pub const THEME: &str = "assets/svg/theme.svg";
+	pub const WINDOW_CLOSE: &str = "assets/svg/window-close.svg";
+	pub const WINDOW_MAXIMIZE: &str = "assets/svg/window-maximize.svg";
+	pub const WINDOW_MINIMIZE: &str = "assets/svg/window-minimize.svg";
+}
+
+// --------- //
+// Structure //
+// --------- //
+
+style_class!(pub Icon);
+style_class!(pub IconWithOpacity);

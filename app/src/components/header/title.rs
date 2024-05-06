@@ -8,18 +8,43 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-mod app;
+use floem::action::set_window_title;
+use floem::reactive::{self, use_context};
+use floem::view::Widget;
+use floem::views::{container, label, Decorators};
 
-use self::app::Application;
+use crate::state::ApplicationStateShared;
+use crate::styles::variables::*;
 
-type SkyApplication = Application<sky_ui_floem::FloemApplication>;
+// --------- //
+// Structure //
+// --------- //
 
-// ---- //
-// Main //
-// ---- //
+pub struct Title;
 
-fn main()
+// -------------- //
+// Implémentation //
+// -------------- //
+
+impl Title
 {
-	let app: SkyApplication = SkyApplication::new().window_title("Sky");
-	app.run();
+	pub fn render(&self) -> impl Widget
+	{
+		let state: ApplicationStateShared =
+			use_context().expect("État de l'application");
+
+		let title = state.title_data.read();
+
+		reactive::create_effect(move |_| {
+			set_window_title(title.get());
+		});
+
+		container(
+			label(move || title.get())
+				.style(|style| style.max_width(space8(310))),
+		)
+		.on_click_cont(move |_| {
+			state.title_data.write().set(title.get());
+		})
+	}
 }

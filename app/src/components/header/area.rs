@@ -8,47 +8,58 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::style_class;
+use floem::view::View;
+use floem::views::{drag_window_area, h_stack, Decorators};
+use floem::window::WindowId;
 
-// ----- //
-// MACRO //
-// ----- //
-
-macro_rules! make_svg_icon {
-	(
-		$(
-			$(#[$doc:meta])*
-			$vis:vis const $constant:ident : &str = $svg:literal;
-		)*
-	) => { $(paste::paste! {
-		$(#[$doc])*
-		$vis fn [ < $constant:lower _icon > ] () -> impl floem::view::View
-		{
-			use floem::views::{Decorators, svg};
-			const $constant: &str = include_str!(concat!("../../../../", $svg));
-			svg(|| $constant.to_owned())
-				.style(|style| style.size(24, 24))
-		}
-	})* };
-}
-
-// -------- //
-// Constant //
-// -------- //
-
-make_svg_icon! {
-	pub const HOME: &str = "assets/svg/home.svg";
-	pub const NOTIFICATION: &str = "assets/svg/notification.svg";
-	pub const SEARCH: &str = "assets/svg/search.svg";
-	pub const THEME: &str = "assets/svg/theme.svg";
-	pub const WINDOW_CLOSE: &str = "assets/svg/window-close.svg";
-	pub const WINDOW_MAXIMIZE: &str = "assets/svg/window-maximize.svg";
-	pub const WINDOW_MINIMIZE: &str = "assets/svg/window-minimize.svg";
-}
+use super::controls::WindowControls;
+use super::title::Title;
+use super::url_bar::URLBar;
+use super::user_avatar::UserAvatar;
+use crate::styles::classes::align::gap::Gap16;
+use crate::styles::variables::*;
 
 // --------- //
 // Structure //
 // --------- //
 
-style_class!(pub Icon);
-style_class!(pub IconWithOpacity);
+pub struct HeaderArea
+{
+	user_avatar: UserAvatar,
+	url_bar: URLBar,
+	title: Title,
+	controls: WindowControls,
+}
+
+// -------------- //
+// Implémentation //
+// -------------- //
+
+impl HeaderArea
+{
+	pub fn new(window_id: WindowId) -> Self
+	{
+		Self {
+			user_avatar: UserAvatar,
+			url_bar: URLBar,
+			title: Title,
+			controls: WindowControls::new(window_id),
+		}
+	}
+
+	pub fn render(&self) -> impl View
+	{
+		let avatar = self.user_avatar.render();
+		let search_url_bar = self.url_bar.render();
+		let window_title =
+			drag_window_area(self.title.render()).style(|style| {
+				style.flex_grow(1.0).justify_center().items_center()
+			});
+		let window_controls = self.controls.render();
+		h_stack((avatar, search_url_bar, window_title, window_controls))
+			.class(Gap16)
+			.style(|style| {
+				style.width_full().height(space8(80)).padding(space(2))
+			})
+	}
+}

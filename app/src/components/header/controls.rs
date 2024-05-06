@@ -15,10 +15,10 @@ use floem::view::View;
 use floem::views::{h_stack, Decorators};
 use floem::{action, window};
 
-use crate::classes::align::gap::Gap8;
-use crate::icons::*;
-use crate::state::FloemApplicationStateShared;
-use crate::variables::*;
+use crate::components::icons::*;
+use crate::state::ApplicationStateShared;
+use crate::styles::classes::align::gap::*;
+use crate::styles::variables::*;
 
 // --------- //
 // Structure //
@@ -55,7 +55,7 @@ impl WindowControls
 	pub fn render(&self) -> impl View
 	{
 		let change_theme_handler = |_: &Event| {
-			let state = use_context::<FloemApplicationStateShared>()
+			let state = use_context::<ApplicationStateShared>()
 				.expect("État de l'application");
 			state.theme_data.toggle();
 		};

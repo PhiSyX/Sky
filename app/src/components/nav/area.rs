@@ -8,43 +8,33 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::action::set_window_title;
-use floem::reactive::{self, use_context};
-use floem::view::Widget;
-use floem::views::{container, label, Decorators};
+use floem::view::View;
+use floem::views::{v_stack, Decorators};
 
-use crate::state::FloemApplicationStateShared;
-use crate::variables::*;
+use crate::components::icons::*;
+use crate::styles::classes::align::gap::*;
+use crate::styles::variables::*;
 
 // --------- //
 // Structure //
 // --------- //
 
-pub struct Title;
+pub struct NavigationArea;
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl Title
+impl NavigationArea
 {
-	pub fn render(&self) -> impl Widget
+	pub fn render(&self) -> impl View
 	{
-		let state: FloemApplicationStateShared =
-			use_context().expect("État de l'application");
-
-		let title = state.title_data.read();
-
-		reactive::create_effect(move |_| {
-			set_window_title(title.get());
-		});
-
-		container(
-			label(move || title.get())
-				.style(|style| style.max_width(space8(310))),
-		)
-		.on_click_cont(move |_| {
-			state.title_data.write().set(title.get());
+		v_stack((
+			home_icon().class(IconWithOpacity), // -- don't format please
+		))
+		.class(Gap24)
+		.style(|style| {
+			style.width(space(6)).items_center().padding_vert(space(2))
 		})
 	}
 }

@@ -10,14 +10,12 @@
 
 use floem::reactive::use_context;
 use floem::style::TextOverflow;
-use floem::unit::UnitExt;
-use floem::view::{View, Widget};
-use floem::views::{container, dyn_container, scroll, text, Decorators};
-use reqwest::header::{HeaderMap, HeaderName, HeaderValue, USER_AGENT};
+use floem::view::View;
+use floem::views::{dyn_container, scroll, text, Decorators};
 
-use crate::colors::{COLOR_RED600, MAIN_AREA_DARK_MODE, MAIN_AREA_LIGHT_MODE};
-use crate::state::{FloemApplicationStateShared, Page};
-use crate::variables::*;
+use crate::state::{ApplicationStateShared, Page};
+use crate::styles::colors::*;
+use crate::styles::variables::*;
 
 // --------- //
 // Structure //
@@ -46,10 +44,10 @@ impl ContentArea
 
 	pub fn render(&self) -> impl View
 	{
-		let state: FloemApplicationStateShared =
+		let state: ApplicationStateShared =
 			use_context().expect("État de l'application");
 
-		let state_ref = FloemApplicationStateShared::clone(&state);
+		let state_ref = ApplicationStateShared::clone(&state);
 
 		dyn_container(
 			move || state_ref.pages_data.current_page.get(),
