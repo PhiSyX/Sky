@@ -50,4 +50,4 @@ pub const TEXT_COLOR_WHITE: Color = COLOR_GREY50;
 pub const MAIN_AREA_DARK_MODE: Color = Color::rgb8(29, 33, 37);
 
 // Light Mode
-pub const MAIN_AREA_LIGHT_MODE: Color = COLOR_ULTRA_WHITE;
+pub const MAIN_AREA_LIGHT_MODE: Color = COLOR_GREY100;

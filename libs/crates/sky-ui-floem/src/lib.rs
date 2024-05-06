@@ -13,10 +13,12 @@
 mod app;
 mod classes;
 mod colors;
+mod content;
 mod header;
 mod icons;
+mod nav;
+mod state;
 mod variables;
 mod window;
-mod state;
 
 pub use self::app::*;

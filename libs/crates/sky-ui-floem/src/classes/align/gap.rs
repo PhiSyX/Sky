@@ -16,3 +16,4 @@ use floem::style_class;
 
 style_class!(pub Gap8);
 style_class!(pub Gap16);
+style_class!(pub Gap24);

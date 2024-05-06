@@ -11,18 +11,22 @@
 use floem::peniko::Color;
 use floem::reactive::{provide_context, use_context};
 use floem::style::{CursorStyle, Foreground, TextColor, Transition};
+use floem::unit::UnitExt;
 use floem::view::View;
-use floem::views::{v_stack, Decorators};
+use floem::views::{h_stack, text, v_stack, Decorators};
 use floem::window::WindowId;
 use sky_ui::{ApplicationSettings, ThemeSettings};
 
-use crate::classes::align::gap::{Gap16, Gap8};
+use crate::classes::align::gap::*;
 use crate::colors::*;
+use crate::content::MainArea;
 use crate::header::area::HeaderArea;
 use crate::icons::{Icon, IconWithOpacity};
+use crate::nav::NavigationArea;
 use crate::state::{
 	FloemApplicationState,
 	FloemApplicationStateShared,
+	PagesData,
 	ThemeData,
 	TitleData,
 };
@@ -35,7 +39,9 @@ use crate::variables::*;
 pub struct FloemWindow
 {
 	window_id: WindowId,
-	header_area: HeaderArea,
+	header: HeaderArea,
+	nav: NavigationArea,
+	main: MainArea,
 }
 
 // -------------- //
@@ -49,6 +55,7 @@ impl FloemWindow
 		let shared_settings = settings.shared();
 
 		let state = FloemApplicationState {
+			pages_data: PagesData::new(),
 			theme_data: ThemeData::new(shared_settings.theme()),
 			title_data: TitleData::new(shared_settings.title()),
 		};
@@ -58,7 +65,9 @@ impl FloemWindow
 
 		Self {
 			window_id,
-			header_area: HeaderArea::new(window_id),
+			header: HeaderArea::new(window_id),
+			nav: NavigationArea,
+			main: MainArea::new(),
 		}
 	}
 
@@ -67,10 +76,14 @@ impl FloemWindow
 		let state: FloemApplicationStateShared =
 			use_context().expect("État de l'application");
 
-		let header_area = self.header_area.render();
+		let header_area = self.header.render();
+		let nav_area = self.nav.render();
+		let main_area = self.main.render();
 
 		v_stack((
-			header_area, // -- don't format please
+			header_area,
+			h_stack((nav_area, main_area))
+				.style(|style| style.flex_grow(1.0).size_pct(100.0, 100.0 - 50.0)),
 		))
 		.style(move |style| {
 			style
@@ -94,6 +107,7 @@ impl FloemWindow
 				// Définition des classes
 				.class(Gap8, |style| style.gap(space(1), space(1)))
 				.class(Gap16, |style| style.gap(space(2), space(2)))
+				.class(Gap24, |style| style.gap(space(3), space(3)))
 				.class(Icon, |style| {
 					style
 						.apply_if(state.theme_data.is_current_dark(), |s| {

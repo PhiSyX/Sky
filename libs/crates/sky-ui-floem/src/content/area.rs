@@ -8,41 +8,39 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-mod pages;
-mod theme;
-mod title;
+use floem::view::View;
+use floem::views::{h_stack, Decorators};
 
-use std::sync::Arc;
-
-pub use self::pages::{Page, PagesData};
-pub use self::theme::ThemeData;
-pub use self::title::TitleData;
-
-// ---- //
-// Type //
-// ---- //
-
-pub type FloemApplicationStateShared = Arc<FloemApplicationState>;
+use super::content::ContentArea;
 
 // --------- //
 // Structure //
 // --------- //
 
-pub struct FloemApplicationState
+pub struct MainArea
 {
-	pub pages_data: PagesData,
-	pub theme_data: ThemeData,
-	pub title_data: TitleData,
+	content: ContentArea,
 }
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl FloemApplicationState
+impl MainArea
 {
-	pub fn shared(self) -> FloemApplicationStateShared
+	pub fn new() -> Self
 	{
-		FloemApplicationStateShared::new(self)
+		Self {
+			content: ContentArea,
+		}
+	}
+
+	pub fn render(&self) -> impl View
+	{
+		let content_area = self.content.render();
+		h_stack((
+			content_area, // -- don't format please
+		))
+		.style(|style| style.flex_grow(1.0).size_full())
 	}
 }

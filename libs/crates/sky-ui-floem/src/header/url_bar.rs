@@ -8,7 +8,7 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::peniko::Color;
+use floem::keyboard::{Key, Modifiers, NamedKey};
 use floem::reactive::{create_rw_signal, use_context};
 use floem::view::View;
 use floem::views::{h_stack, text_input, Decorators};
@@ -17,7 +17,7 @@ use floem::widgets::PlaceholderTextClass;
 use crate::classes::align::gap::Gap8;
 use crate::colors::*;
 use crate::icons::*;
-use crate::state::FloemApplicationStateShared;
+use crate::state::{FloemApplicationStateShared, Page};
 use crate::variables::*;
 
 // --------- //
@@ -37,21 +37,54 @@ impl URLBar
 		let state: FloemApplicationStateShared =
 			use_context().expect("État de l'application");
 
-		let url = create_rw_signal(String::new());
-		// MAIN_AREA_LIGHT_MODE
+		let url_s = create_rw_signal(String::new());
+
+		let state_r = FloemApplicationStateShared::clone(&state);
+		let state_w = FloemApplicationStateShared::clone(&state);
 
 		h_stack((
 			search_icon().class(IconWithOpacity),
-			text_input(url)
+			text_input(url_s)
 				.placeholder("Entrer une URL...")
-				.style(|style| {
+				.style(move |style| {
 					style
+						.apply_if(state_r.theme_data.is_current_dark(), |s| {
+							s.color(COLOR_WHITE)
+						})
+						.apply_if(state_r.theme_data.is_current_light(), |s| {
+							s.color(COLOR_GREY700)
+						})
 						.flex_grow(1.0)
 						.items_center()
 						.size_full()
 						.margin_top(-4)
-						.color(Color::WHITE)
-				}),
+				})
+				.on_key_up(
+					Key::Named(NamedKey::Enter),
+					Modifiers::empty(),
+					move |_| {
+						let file_or_url = url_s.get();
+						let file_or_url = file_or_url.trim();
+
+						if file_or_url.is_empty() {
+							return;
+						}
+
+						if let Ok(url) = file_or_url.parse::<url::Url>() {
+							if url.scheme().starts_with("http") {
+								state_w
+									.pages_data
+									.current_page
+									.set(Page::Url(url));
+								return;
+							}
+						}
+
+						state_w.pages_data.current_page.set(Page::File(
+							file_or_url.trim_start_matches("file://").into(),
+						));
+					},
+				),
 		))
 		.class(Gap8)
 		.style(|style| {

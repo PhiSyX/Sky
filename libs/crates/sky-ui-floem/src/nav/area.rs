@@ -8,41 +8,33 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-mod pages;
-mod theme;
-mod title;
+use floem::view::View;
+use floem::views::{v_stack, Decorators};
 
-use std::sync::Arc;
-
-pub use self::pages::{Page, PagesData};
-pub use self::theme::ThemeData;
-pub use self::title::TitleData;
-
-// ---- //
-// Type //
-// ---- //
-
-pub type FloemApplicationStateShared = Arc<FloemApplicationState>;
+use crate::classes::align::gap::Gap24;
+use crate::icons::*;
+use crate::variables::*;
 
 // --------- //
 // Structure //
 // --------- //
 
-pub struct FloemApplicationState
-{
-	pub pages_data: PagesData,
-	pub theme_data: ThemeData,
-	pub title_data: TitleData,
-}
+pub struct NavigationArea;
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl FloemApplicationState
+impl NavigationArea
 {
-	pub fn shared(self) -> FloemApplicationStateShared
+	pub fn render(&self) -> impl View
 	{
-		FloemApplicationStateShared::new(self)
+		v_stack((
+			home_icon().class(IconWithOpacity), // -- don't format please
+		))
+		.class(Gap24)
+		.style(|style| {
+			style.width(space(6)).items_center().padding_vert(space(2))
+		})
 	}
 }
