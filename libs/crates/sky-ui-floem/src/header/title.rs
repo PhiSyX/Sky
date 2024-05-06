@@ -8,69 +8,43 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use std::sync::Arc;
+use floem::action::set_window_title;
+use floem::reactive::{self, use_context};
+use floem::view::Widget;
+use floem::views::{container, label, Decorators};
+
+use crate::state::FloemApplicationStateShared;
+use crate::variables::*;
 
 // --------- //
 // Structure //
 // --------- //
 
-#[derive(Debug)]
-#[derive(Default)]
-pub struct ApplicationSettings
-{
-	theme: ThemeSettings,
-	title: String,
-}
-
-// ----------- //
-// Énumération //
-// ----------- //
-
-#[derive(Debug)]
-#[derive(Default)]
-#[derive(Copy, Clone)]
-#[derive(PartialEq, Eq)]
-pub enum ThemeSettings
-{
-	#[default]
-	Dark,
-	Light,
-}
+pub struct Title;
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl ApplicationSettings
+impl Title
 {
-	pub fn shared(self) -> Arc<Self>
+	pub fn render(&self) -> impl Widget
 	{
-		Arc::new(self)
-	}
-}
+		let state: FloemApplicationStateShared =
+			use_context().expect("État de l'application");
 
-impl ApplicationSettings
-{
-	pub fn theme(&self) -> ThemeSettings
-	{
-		self.theme
-	}
+		let title = state.title_data.read();
 
-	pub fn set_theme(&mut self, theme: ThemeSettings)
-	{
-		self.theme = theme;
-	}
-}
+		reactive::create_effect(move |_| {
+			set_window_title(title.get());
+		});
 
-impl ApplicationSettings
-{
-	pub fn title(&self) -> &str
-	{
-		&self.title
-	}
-
-	pub fn set_title(&mut self, title: impl ToString)
-	{
-		self.title = title.to_string();
+		container(
+			label(move || title.get())
+				.style(|style| style.max_width(space8(310))),
+		)
+		.on_click_cont(move |_| {
+			state.title_data.write().set(title.get());
+		})
 	}
 }

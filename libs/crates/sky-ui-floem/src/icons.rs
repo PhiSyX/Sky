@@ -8,69 +8,47 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use std::sync::Arc;
+use floem::style_class;
+
+// ----- //
+// MACRO //
+// ----- //
+
+macro_rules! make_svg_icon {
+	(
+		$(
+			$(#[$doc:meta])*
+			$vis:vis const $constant:ident : &str = $svg:literal;
+		)*
+	) => { $(paste::paste! {
+		$(#[$doc])*
+		$vis fn [ < $constant:lower _icon > ] () -> impl floem::view::View
+		{
+			use floem::views::{Decorators, svg};
+			const $constant: &str = include_str!(concat!("../../../../", $svg));
+			svg(|| $constant.to_owned())
+				.style(|style| style.size(24, 24))
+		}
+	})* };
+}
+
+// -------- //
+// Constant //
+// -------- //
+
+make_svg_icon! {
+	pub const HOME: &str = "assets/svg/home.svg";
+	pub const NOTIFICATION: &str = "assets/svg/notification.svg";
+	pub const SEARCH: &str = "assets/svg/search.svg";
+	pub const THEME: &str = "assets/svg/theme.svg";
+	pub const WINDOW_CLOSE: &str = "assets/svg/window-close.svg";
+	pub const WINDOW_MAXIMIZE: &str = "assets/svg/window-maximize.svg";
+	pub const WINDOW_MINIMIZE: &str = "assets/svg/window-minimize.svg";
+}
 
 // --------- //
 // Structure //
 // --------- //
 
-#[derive(Debug)]
-#[derive(Default)]
-pub struct ApplicationSettings
-{
-	theme: ThemeSettings,
-	title: String,
-}
-
-// ----------- //
-// Énumération //
-// ----------- //
-
-#[derive(Debug)]
-#[derive(Default)]
-#[derive(Copy, Clone)]
-#[derive(PartialEq, Eq)]
-pub enum ThemeSettings
-{
-	#[default]
-	Dark,
-	Light,
-}
-
-// -------------- //
-// Implémentation //
-// -------------- //
-
-impl ApplicationSettings
-{
-	pub fn shared(self) -> Arc<Self>
-	{
-		Arc::new(self)
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn theme(&self) -> ThemeSettings
-	{
-		self.theme
-	}
-
-	pub fn set_theme(&mut self, theme: ThemeSettings)
-	{
-		self.theme = theme;
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn title(&self) -> &str
-	{
-		&self.title
-	}
-
-	pub fn set_title(&mut self, title: impl ToString)
-	{
-		self.title = title.to_string();
-	}
-}
+style_class!(pub Icon);
+style_class!(pub IconWithOpacity);

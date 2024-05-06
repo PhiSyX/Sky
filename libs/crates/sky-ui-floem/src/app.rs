@@ -14,10 +14,9 @@ use floem::keyboard::{Key, Modifiers, NamedKey};
 use floem::view::View;
 use floem::views::Decorators;
 use floem::window::{self, WindowConfig};
-use floem::{reactive, Application};
+use floem::Application;
 use sky_ui::{ApplicationAdapter, ApplicationSettings};
 
-use crate::header::title::WindowTitleData;
 use crate::window::FloemWindow;
 
 // --------- //
@@ -53,23 +52,11 @@ impl ApplicationAdapter for FloemApplication
 		let window_settings = WindowConfig::default()
 			.size((1440.0, 800.0))
 			.title(self.settings.title())
+			// .apply_default_theme(false)
+			// .with_transparent(true)
 			.show_titlebar(false);
 
 		let window_render = |window_id| {
-			// Shared Data
-
-			let window_title_data = WindowTitleData {
-				default_title: self.settings.title().to_owned(),
-				title: reactive::create_signal(
-					self.settings.title().to_owned(),
-				),
-			};
-
-			let window_title_data_shared = window_title_data.shared();
-			floem::reactive::provide_context(window_title_data_shared.clone());
-
-			// Rendu
-
 			let view = FloemWindow::new(self.settings, window_id).view();
 			let view_id = view.id();
 			view

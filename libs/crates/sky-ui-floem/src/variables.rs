@@ -8,69 +8,21 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use std::sync::Arc;
+// -------- //
+// Constant //
+// -------- //
 
-// --------- //
-// Structure //
-// --------- //
+pub const DEFAULT_FONT_FAMILY: &str = "Roboto";
+pub const DEFAULT_FONT_SIZE: f32 = 14.0;
+pub const DEFAULT_SPACE: i32 = 8;
+pub const DEFAULT_BORDER_RADIUS: i32 = 4;
 
-#[derive(Debug)]
-#[derive(Default)]
-pub struct ApplicationSettings
+pub const fn space(n: i32) -> i32
 {
-	theme: ThemeSettings,
-	title: String,
+	n * DEFAULT_SPACE
 }
 
-// ----------- //
-// Énumération //
-// ----------- //
-
-#[derive(Debug)]
-#[derive(Default)]
-#[derive(Copy, Clone)]
-#[derive(PartialEq, Eq)]
-pub enum ThemeSettings
+pub const fn space8(px: i32) -> i32
 {
-	#[default]
-	Dark,
-	Light,
-}
-
-// -------------- //
-// Implémentation //
-// -------------- //
-
-impl ApplicationSettings
-{
-	pub fn shared(self) -> Arc<Self>
-	{
-		Arc::new(self)
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn theme(&self) -> ThemeSettings
-	{
-		self.theme
-	}
-
-	pub fn set_theme(&mut self, theme: ThemeSettings)
-	{
-		self.theme = theme;
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn title(&self) -> &str
-	{
-		&self.title
-	}
-
-	pub fn set_title(&mut self, title: impl ToString)
-	{
-		self.title = title.to_string();
-	}
+	px.div_ceil(DEFAULT_SPACE) * DEFAULT_SPACE
 }

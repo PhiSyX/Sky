@@ -8,69 +8,63 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use std::sync::Arc;
+use floem::reactive::{create_signal, ReadSignal, WriteSignal};
+use sky_ui::ThemeSettings;
 
 // --------- //
 // Structure //
 // --------- //
 
-#[derive(Debug)]
-#[derive(Default)]
-pub struct ApplicationSettings
+pub struct ThemeData
 {
-	theme: ThemeSettings,
-	title: String,
-}
-
-// ----------- //
-// Énumération //
-// ----------- //
-
-#[derive(Debug)]
-#[derive(Default)]
-#[derive(Copy, Clone)]
-#[derive(PartialEq, Eq)]
-pub enum ThemeSettings
-{
-	#[default]
-	Dark,
-	Light,
+	signal: (ReadSignal<ThemeSettings>, WriteSignal<ThemeSettings>),
 }
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl ApplicationSettings
+impl ThemeData
 {
-	pub fn shared(self) -> Arc<Self>
+	pub fn new(theme: ThemeSettings) -> Self
 	{
-		Arc::new(self)
+		Self {
+			signal: create_signal(theme),
+		}
+	}
+
+	pub fn read(&self) -> ReadSignal<ThemeSettings>
+	{
+		self.signal.0
+	}
+
+	pub fn write(&self) -> WriteSignal<ThemeSettings>
+	{
+		self.signal.1
 	}
 }
 
-impl ApplicationSettings
+impl ThemeData
 {
-	pub fn theme(&self) -> ThemeSettings
+	pub fn is_current_dark(&self) -> bool
 	{
-		self.theme
+		self.read().get() == ThemeSettings::Dark
 	}
 
-	pub fn set_theme(&mut self, theme: ThemeSettings)
+	pub fn is_current_light(&self) -> bool
 	{
-		self.theme = theme;
+		self.read().get() == ThemeSettings::Light
 	}
 }
 
-impl ApplicationSettings
+impl ThemeData
 {
-	pub fn title(&self) -> &str
+	pub fn toggle(&self)
 	{
-		&self.title
-	}
-
-	pub fn set_title(&mut self, title: impl ToString)
-	{
-		self.title = title.to_string();
+		if self.is_current_dark() {
+			self.write().set(ThemeSettings::Light)
+		} else {
+			self.write().set(ThemeSettings::Dark)
+		}
 	}
 }

@@ -8,8 +8,15 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
+#![feature(int_roundings)]
+
 mod app;
+mod classes;
 mod colors;
+mod header;
+mod icons;
+mod variables;
 mod window;
+mod state;
 
 pub use self::app::*;

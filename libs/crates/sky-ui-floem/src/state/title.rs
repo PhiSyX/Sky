@@ -8,69 +8,50 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use std::sync::Arc;
+use floem::reactive::{create_signal, ReadSignal, WriteSignal};
 
 // --------- //
 // Structure //
 // --------- //
 
-#[derive(Debug)]
-#[derive(Default)]
-pub struct ApplicationSettings
+pub struct TitleData
 {
-	theme: ThemeSettings,
-	title: String,
-}
-
-// ----------- //
-// Énumération //
-// ----------- //
-
-#[derive(Debug)]
-#[derive(Default)]
-#[derive(Copy, Clone)]
-#[derive(PartialEq, Eq)]
-pub enum ThemeSettings
-{
-	#[default]
-	Dark,
-	Light,
+	default: String,
+	signal: (ReadSignal<String>, WriteSignal<String>),
 }
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl ApplicationSettings
+impl TitleData
 {
-	pub fn shared(self) -> Arc<Self>
+	pub fn new(default_title: impl ToString) -> Self
 	{
-		Arc::new(self)
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn theme(&self) -> ThemeSettings
-	{
-		self.theme
+		Self {
+			default: default_title.to_string(),
+			signal: create_signal(default_title.to_string()),
+		}
 	}
 
-	pub fn set_theme(&mut self, theme: ThemeSettings)
+	pub fn read(&self) -> ReadSignal<String>
 	{
-		self.theme = theme;
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn title(&self) -> &str
-	{
-		&self.title
+		self.signal.0
 	}
 
-	pub fn set_title(&mut self, title: impl ToString)
+	pub fn write(&self) -> WriteSignal<String>
 	{
-		self.title = title.to_string();
+		self.signal.1
+	}
+
+	pub fn set_title(&self, new_title: impl Into<String>)
+	{
+		self.signal.1.update(move |current_title| {
+			let title = new_title.into();
+			if title.trim() == self.default {
+				return;
+			}
+			*current_title = format!("{} - {}", title, self.default);
+		})
 	}
 }

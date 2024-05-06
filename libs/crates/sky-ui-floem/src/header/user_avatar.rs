@@ -8,69 +8,39 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use std::sync::Arc;
+use floem::peniko::Color;
+use floem::view::View;
+use floem::views::{container, img, Decorators};
+
+use crate::variables::*;
 
 // --------- //
 // Structure //
 // --------- //
 
-#[derive(Debug)]
-#[derive(Default)]
-pub struct ApplicationSettings
-{
-	theme: ThemeSettings,
-	title: String,
-}
-
-// ----------- //
-// Énumération //
-// ----------- //
-
-#[derive(Debug)]
-#[derive(Default)]
-#[derive(Copy, Clone)]
-#[derive(PartialEq, Eq)]
-pub enum ThemeSettings
-{
-	#[default]
-	Dark,
-	Light,
-}
+pub struct UserAvatar;
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl ApplicationSettings
+impl UserAvatar
 {
-	pub fn shared(self) -> Arc<Self>
+	pub fn render(&self) -> impl View
 	{
-		Arc::new(self)
-	}
-}
+		// FIXME(phisyx): récupérer une image via une URL distante ou la
+		// récupérer via le profil utilisateur de l'OS.
+		let user_profile_avatar =
+			include_bytes!("../../../../../assets/img/user.jpg");
 
-impl ApplicationSettings
-{
-	pub fn theme(&self) -> ThemeSettings
-	{
-		self.theme
-	}
-
-	pub fn set_theme(&mut self, theme: ThemeSettings)
-	{
-		self.theme = theme;
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn title(&self) -> &str
-	{
-		&self.title
-	}
-
-	pub fn set_title(&mut self, title: impl ToString)
-	{
-		self.title = title.to_string();
+		container(img(move || user_profile_avatar.to_vec()).style(|style| {
+			style
+				.size(space(6), space(6))
+				.border_radius(space(6))
+				.box_shadow_color(Color::BLACK)
+				.box_shadow_blur(4)
+				.box_shadow_h_offset(2)
+				.box_shadow_v_offset(2)
+		}))
 	}
 }

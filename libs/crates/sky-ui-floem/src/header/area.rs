@@ -8,69 +8,58 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use std::sync::Arc;
+use floem::view::View;
+use floem::views::{drag_window_area, h_stack, Decorators};
+use floem::window::WindowId;
+
+use super::controls::WindowControls;
+use super::title::Title;
+use super::url_bar::URLBar;
+use super::user_avatar::UserAvatar;
+use crate::classes::align::gap::Gap16;
+use crate::variables::*;
 
 // --------- //
 // Structure //
 // --------- //
 
-#[derive(Debug)]
-#[derive(Default)]
-pub struct ApplicationSettings
+pub struct HeaderArea
 {
-	theme: ThemeSettings,
-	title: String,
-}
-
-// ----------- //
-// Énumération //
-// ----------- //
-
-#[derive(Debug)]
-#[derive(Default)]
-#[derive(Copy, Clone)]
-#[derive(PartialEq, Eq)]
-pub enum ThemeSettings
-{
-	#[default]
-	Dark,
-	Light,
+	user_avatar: UserAvatar,
+	url_bar: URLBar,
+	title: Title,
+	controls: WindowControls,
 }
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl ApplicationSettings
+impl HeaderArea
 {
-	pub fn shared(self) -> Arc<Self>
+	pub fn new(window_id: WindowId) -> Self
 	{
-		Arc::new(self)
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn theme(&self) -> ThemeSettings
-	{
-		self.theme
+		Self {
+			user_avatar: UserAvatar,
+			url_bar: URLBar,
+			title: Title,
+			controls: WindowControls::new(window_id),
+		}
 	}
 
-	pub fn set_theme(&mut self, theme: ThemeSettings)
+	pub fn render(&self) -> impl View
 	{
-		self.theme = theme;
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn title(&self) -> &str
-	{
-		&self.title
-	}
-
-	pub fn set_title(&mut self, title: impl ToString)
-	{
-		self.title = title.to_string();
+		let avatar = self.user_avatar.render();
+		let search_url_bar = self.url_bar.render();
+		let window_title =
+			drag_window_area(self.title.render()).style(|style| {
+				style.flex_grow(1.0).justify_center().items_center()
+			});
+		let window_controls = self.controls.render();
+		h_stack((avatar, search_url_bar, window_title, window_controls))
+			.class(Gap16)
+			.style(|style| {
+				style.width_full().height(space8(80)).padding(space(2))
+			})
 	}
 }

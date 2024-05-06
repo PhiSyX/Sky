@@ -8,69 +8,38 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
+mod theme;
+mod title;
+
 use std::sync::Arc;
+
+pub use self::theme::ThemeData;
+pub use self::title::TitleData;
+
+// ---- //
+// Type //
+// ---- //
+
+pub type FloemApplicationStateShared = Arc<FloemApplicationState>;
 
 // --------- //
 // Structure //
 // --------- //
 
-#[derive(Debug)]
-#[derive(Default)]
-pub struct ApplicationSettings
+pub struct FloemApplicationState
 {
-	theme: ThemeSettings,
-	title: String,
-}
-
-// ----------- //
-// Énumération //
-// ----------- //
-
-#[derive(Debug)]
-#[derive(Default)]
-#[derive(Copy, Clone)]
-#[derive(PartialEq, Eq)]
-pub enum ThemeSettings
-{
-	#[default]
-	Dark,
-	Light,
+	pub theme_data: ThemeData,
+	pub title_data: TitleData,
 }
 
 // -------------- //
 // Implémentation //
 // -------------- //
 
-impl ApplicationSettings
+impl FloemApplicationState
 {
-	pub fn shared(self) -> Arc<Self>
+	pub fn shared(self) -> FloemApplicationStateShared
 	{
-		Arc::new(self)
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn theme(&self) -> ThemeSettings
-	{
-		self.theme
-	}
-
-	pub fn set_theme(&mut self, theme: ThemeSettings)
-	{
-		self.theme = theme;
-	}
-}
-
-impl ApplicationSettings
-{
-	pub fn title(&self) -> &str
-	{
-		&self.title
-	}
-
-	pub fn set_title(&mut self, title: impl ToString)
-	{
-		self.title = title.to_string();
+		FloemApplicationStateShared::new(self)
 	}
 }
