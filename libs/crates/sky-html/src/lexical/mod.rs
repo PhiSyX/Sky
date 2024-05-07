@@ -10,6 +10,11 @@
 
 mod error;
 mod lexeme;
+mod stream
+{
+	mod data;
+	pub use self::data::*;
+}
 mod token;
 mod tokenizer;
 

@@ -8,6 +8,8 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
+use std::ops::ControlFlow;
+
 use sky_lang::{InputStream, Location, UnitCodePointExt};
 
 use super::error::HTMLLexicalError;
@@ -36,8 +38,17 @@ pub struct HTMLTokenizer<Input: Iterator>
 pub enum HTMLTokenizerState
 {
 	Data,
+	TagOpen,
+pub enum HTMLTokenizerOk
+{
+	Emit(HTMLToken),
+	None,
 }
 
+pub enum HTMLTokenizerErr
+{
+	Emit(HTMLLexicalError),
+}
 
 // -------------- //
 // Implémentation //
@@ -75,10 +86,32 @@ where
 
 			#[rustfmt::skip]
 			let control_flow = match self.current_state {
+				// 13.2.5.1 Data state
+				| HTMLTokenizerState::Data => self.handle_data_state(),
 				|_ => return {
 					Ok(vec![HTMLToken::end_of_stream().with_location(self.current_location)])
 				},
 			};
+
+			match control_flow {
+				| ControlFlow::Continue(ok_flow) => {
+					match ok_flow {
+						| HTMLTokenizerOk::Emit(token) => {
+							return Ok(vec![
+								token.with_location(self.current_location)
+							]);
+						}
+					}
+				}
+
+				| ControlFlow::Break(err_flow) => {
+					match err_flow {
+						| HTMLTokenizerErr::Emit(err) => {
+							return Err(err.with_location(self.current_location))
+						}
+					}
+				}
+			}
 		}
 
 		self.current_token
