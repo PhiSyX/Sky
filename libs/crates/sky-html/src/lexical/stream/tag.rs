@@ -46,6 +46,10 @@ pub trait HTMLTokenizerTagStream
 	fn handle_attribute_name_state(
 		&mut self,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
+
+	fn handle_before_attribute_value_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
 }
 
 // -------------- //
@@ -307,6 +311,39 @@ where
 
 			| None => {
 				self.reconsume(HTMLTokenizerState::AfterAttributeName);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+		}
+	}
+
+	fn handle_before_attribute_value_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>
+	{
+		match self.input.consume_next() {
+			| Some(cp) if cp.is__whitespace() => {
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.one_of(['"', '\'']) => {
+				self.current_state
+					.switch(HTMLTokenizerState::AttributeValue {
+						quote: Some(cp.unit()),
+					});
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is('>') => {
+				self.current_state.switch(HTMLTokenizerState::Data);
+				ControlFlow::Continue(HTMLTokenizerOk::EmitCurrentWithError(
+					HTMLLexicalError::missing_attribute_value(),
+				))
+			}
+
+			| _ => {
+				self.reconsume(HTMLTokenizerState::AttributeValue {
+					quote: None,
+				});
 				ControlFlow::Continue(HTMLTokenizerOk::None)
 			}
 		}

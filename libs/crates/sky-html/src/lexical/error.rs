@@ -79,6 +79,12 @@ pub enum HTMLLexicalErrorVariant
 		found: char
 	},
 
+	/// Cette erreur se produit si l'analyseur rencontre un point de code U+003E
+	/// (>) là où une valeur d'attribut est attendue (par exemple, `<div id=>`).
+	/// L'analyseur syntaxique traite l'attribut comme ayant une valeur vide.
+	#[error("Caractère '>' trouvé, une valeur d'attribut est attendue")]
+	MissingAttributeValue,
+
 	/// Cette erreur se produit si l'analyseur rencontre un point de code
 	/// U+003E (>) là où un nom de balise de fin est attendu, c'est-à-dire </>.
 	/// L'analyseur syntaxique ignore l'ensemble de la séquence de points de
@@ -193,6 +199,14 @@ impl HTMLLexicalError
 			variant: HTMLLexicalErrorVariant::InvalidFirstCharacterOfTagName {
 				found,
 			},
+			location: Location::new(),
+		}
+	}
+
+	pub const fn missing_attribute_value() -> Self
+	{
+		Self {
+			variant: HTMLLexicalErrorVariant::MissingAttributeValue,
 			location: Location::new(),
 		}
 	}

@@ -43,6 +43,13 @@ pub enum HTMLTokenizerState
 {
 	AfterAttributeName,
 	AttributeName,
+	AttributeValue
+	{
+		// NOTE: quoted   = Some('\'')
+		// NOTE: quoted   = Some('"')
+		// NOTE: unquoted = None
+		quote: Option<char>,
+	},
 	BeforeAttributeName,
 	BeforeAttributeValue,
 	BogusComment,
@@ -62,6 +69,7 @@ pub enum HTMLTokenizerOk
 
 	Emit(HTMLToken),
 	EmitCurrent,
+	EmitCurrentWithError(HTMLLexicalError),
 	EmitWithError(HTMLToken, HTMLLexicalError),
 	ManyEmitWithError(Vec<HTMLToken>, HTMLLexicalError),
 
@@ -129,6 +137,8 @@ where
 				| HTMLTokenizerState::BeforeAttributeName => self.handle_before_attribute_name_state(),
 				// 13.2.5.33 Attribute name state
 				| HTMLTokenizerState::AttributeName => self.handle_attribute_name_state(),
+				// 13.2.5.35 Before attribute value state
+				| HTMLTokenizerState::BeforeAttributeValue => self.handle_before_attribute_value_state(),
 
 				| _ => return {
 					Ok(vec![HTMLToken::end_of_stream().with_location(self.current_location)])
@@ -165,9 +175,20 @@ where
 								token.with_location(self.current_location)
 							]);
 						}
+
 						| HTMLTokenizerOk::EmitCurrent => {
 							break;
 						}
+						// TODO: améliorer la gestion d'erreur.
+						| HTMLTokenizerOk::EmitCurrentWithError(err) => {
+							eprintln!(
+								"HTMLTokenizer error: {}",
+								err.with_location(self.current_location)
+							);
+
+							break;
+						}
+
 						// TODO: améliorer la gestion d'erreur.
 						| HTMLTokenizerOk::EmitWithError(token, err) => {
 							eprintln!(
