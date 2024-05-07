@@ -37,16 +37,38 @@ pub struct HTMLTokenizer<Input: Iterator>
 #[derive(PartialEq, Eq)]
 pub enum HTMLTokenizerState
 {
+	BogusComment,
 	Data,
+	EndTagOpen,
+	MarkupDeclarationOpen,
+	TagName,
 	TagOpen,
+}
+
 pub enum HTMLTokenizerOk
 {
+	Update(HTMLToken),
+	UpdateFn(Box<dyn Fn(&mut HTMLToken)>),
+	UpdateFnWithError(Box<dyn Fn(&mut HTMLToken)>, HTMLLexicalError),
+
 	Emit(HTMLToken),
+	EmitCurrent,
+	EmitWithError(HTMLToken, HTMLLexicalError),
+	ManyEmitWithError(Vec<HTMLToken>, HTMLLexicalError),
+
+	Full
+	{
+		emit: HTMLToken,
+		update: HTMLToken,
+		error: HTMLLexicalError,
+	},
+
 	None,
 }
 
 pub enum HTMLTokenizerErr
 {
+	Update(HTMLToken, HTMLLexicalError),
 	Emit(HTMLLexicalError),
 }
 
@@ -88,6 +110,8 @@ where
 			let control_flow = match self.current_state {
 				// 13.2.5.1 Data state
 				| HTMLTokenizerState::Data => self.handle_data_state(),
+				// 13.2.5.6 Tag open state
+				| HTMLTokenizerState::TagOpen => self.handle_tag_open_state(),
 				|_ => return {
 					Ok(vec![HTMLToken::end_of_stream().with_location(self.current_location)])
 				},
@@ -96,16 +120,88 @@ where
 			match control_flow {
 				| ControlFlow::Continue(ok_flow) => {
 					match ok_flow {
+						| HTMLTokenizerOk::Update(token) => {
+							self.current_token.replace(
+								token.with_location(self.current_location),
+							);
+						}
+						| HTMLTokenizerOk::UpdateFn(update) => {
+							if let Some(token) = self.current_token.as_mut() {
+								update(token);
+							}
+						}
+						// TODO: améliorer la gestion d'erreur.
+						| HTMLTokenizerOk::UpdateFnWithError(update, err) => {
+							eprintln!(
+								"HTMLTokenizer error: {}",
+								err.with_location(self.current_location)
+							);
+
+							if let Some(token) = self.current_token.as_mut() {
+								update(token);
+							}
+						}
+
 						| HTMLTokenizerOk::Emit(token) => {
 							return Ok(vec![
 								token.with_location(self.current_location)
 							]);
 						}
+						| HTMLTokenizerOk::EmitCurrent => {
+							break;
+						}
+						// TODO: améliorer la gestion d'erreur.
+						| HTMLTokenizerOk::EmitWithError(token, err) => {
+							eprintln!(
+								"HTMLTokenizer error: {}",
+								err.with_location(self.current_location)
+							);
+							return Ok(vec![
+								token.with_location(self.current_location)
+							]);
+						}
+						// TODO: améliorer la gestion d'erreur.
+						| HTMLTokenizerOk::ManyEmitWithError(tokens, err) => {
+							eprintln!(
+								"HTMLTokenizer error: {}",
+								err.with_location(self.current_location)
+							);
+							return Ok(tokens);
+						}
+
+						// TODO: améliorer la gestion d'erreur.
+						| HTMLTokenizerOk::Full {
+							emit,
+							update,
+							error,
+						} => {
+							self.current_token.replace(
+								update.with_location(self.current_location),
+							);
+
+							eprintln!(
+								"HTMLTokenizer error: {}",
+								error.with_location(self.current_location)
+							);
+
+							return Ok(vec![
+								emit.with_location(self.current_location)
+							]);
+						}
+
+						| HTMLTokenizerOk::None => continue,
 					}
 				}
 
 				| ControlFlow::Break(err_flow) => {
 					match err_flow {
+						| HTMLTokenizerErr::Update(token, err) => {
+							self.current_token.replace(token);
+							return Err(
+								err.with_location(self.current_location)
+							);
+						}
+
 						| HTMLTokenizerErr::Emit(err) => {
 							return Err(err.with_location(self.current_location))
 						}
@@ -119,6 +215,12 @@ where
 			.map(|t| vec![t.to_owned()])
 			.clone()
 			.ok_or(HTMLLexicalError::idk().with_location(self.current_location))
+	}
+
+	pub fn reconsume(&mut self, state: HTMLTokenizerState)
+	{
+		self.input.rollback_once();
+		self.current_state.switch(state);
 	}
 }
 

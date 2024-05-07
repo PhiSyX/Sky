@@ -25,6 +25,37 @@ pub struct HTMLToken
 	lexeme: HTMLLexeme,
 	location: Location,
 }
+
+// -------------- //
+// Implémentation //
+// -------------- //
+
+impl HTMLToken
+{
+	pub const fn empty_comment() -> Self
+	{
+		Self {
+			lexeme: HTMLLexeme::Comment(String::new()),
+			location: Location::new(),
+		}
+	}
+}
+
+impl HTMLToken
+{
+	pub fn start_tag() -> Self
+	{
+		Self {
+			lexeme: HTMLLexeme::Tag {
+				state: TagState::Opened,
+				name: Default::default(),
+				attributes: Default::default(),
+			},
+			location: Location::new(),
+		}
+	}
+}
+
 impl HTMLToken
 {
 	pub const fn end_of_stream() -> Self

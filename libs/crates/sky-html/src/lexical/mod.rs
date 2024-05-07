@@ -13,7 +13,10 @@ mod lexeme;
 mod stream
 {
 	mod data;
+	mod tag;
+
 	pub use self::data::*;
+	pub use self::tag::*;
 }
 mod token;
 mod tokenizer;
