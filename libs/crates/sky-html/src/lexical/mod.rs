@@ -21,5 +21,6 @@ mod stream
 mod token;
 mod tokenizer;
 
+pub use self::error::HTMLLexicalError;
 pub use self::token::HTMLToken;
 pub use self::tokenizer::HTMLTokenizer;

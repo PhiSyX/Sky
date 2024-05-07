@@ -9,11 +9,13 @@
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 use floem::reactive::use_context;
-use floem::style::TextOverflow;
-use floem::view::View;
-use floem::views::{dyn_container, scroll, text, Decorators};
+use floem::style::{AlignSelf, FontStyle, TextOverflow};
+use floem::taffy::AlignItems;
+use floem::view::{AnyView, View};
+use floem::views::{dyn_container, h_stack, scroll, text, v_stack, Decorators};
 
 use crate::state::{ApplicationStateShared, Page};
+use crate::styles::classes::align::gap::*;
 use crate::styles::colors::*;
 use crate::styles::variables::*;
 
@@ -29,15 +31,51 @@ pub struct ContentArea;
 
 impl ContentArea
 {
-	pub fn current_page(page: Page) -> impl View
+	pub fn current_page(page: Page) -> AnyView
 	{
-		match page.fetch() {
-			| Ok(content) => {
-				text(content)
-					.style(|style| style.text_overflow(TextOverflow::Clip))
+		match page.render() {
+			| Ok((content, stack)) => {
+				let left_content = scroll(
+					v_stack((
+						text("Prévisualisation du rendu").style(|style| {
+							style
+								.color(COLOR_GREY500)
+								.font_style(floem::cosmic_text::Style::Italic)
+						}),
+						stack.style(|style| {
+							style.text_overflow(TextOverflow::Clip)
+						}),
+					))
+					.class(Gap16)
+					.style(|style| style.text_overflow(TextOverflow::Clip)),
+				)
+				.style(|style| style.size_pct(50.0, 100.0));
+
+				let right_content = scroll(
+					v_stack((
+						text("HTML Brut").style(|style| {
+							style
+								.color(COLOR_GREY500)
+								.font_style(floem::cosmic_text::Style::Italic)
+						}),
+						text(content).style(|style| {
+							style.text_overflow(TextOverflow::Clip)
+						}),
+					))
+					.class(Gap16)
+					.style(|style| style.text_overflow(TextOverflow::Clip)),
+				)
+				.style(|style| style.size_pct(50.0, 100.0));
+
+				h_stack((left_content, right_content))
+					.class(Gap8)
+					.style(|style| style.size_full())
+					.any()
 			}
 			| Err(err) => {
-				text(err.to_string()).style(|style| style.color(COLOR_RED600))
+				text(err.to_string())
+					.style(|style| style.color(COLOR_RED600))
+					.any()
 			}
 		}
 	}
@@ -51,13 +89,7 @@ impl ContentArea
 
 		dyn_container(
 			move || state_ref.pages_data.current_page.get(),
-			move |page| {
-				scroll(Self::current_page(page))
-					.style(|style| {
-						style.size_full().text_overflow(TextOverflow::Wrap)
-					})
-					.any()
-			},
+			Self::current_page,
 		)
 		.style(move |style| {
 			style

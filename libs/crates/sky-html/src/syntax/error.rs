@@ -8,10 +8,19 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
+use crate::HTMLLexicalError;
+
 // ----------- //
 // Énumération //
 // ----------- //
 
 #[derive(Debug)]
 #[derive(thiserror::Error)]
-pub enum HTMLParserError {}
+pub enum HTMLParserError
+{
+	#[error("{0}")]
+	LexicalParser(#[from] HTMLLexicalError),
+
+	#[error("{0}")]
+	IO(#[from] std::io::Error),
+}

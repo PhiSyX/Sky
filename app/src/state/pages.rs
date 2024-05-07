@@ -8,10 +8,19 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
+use std::collections::BTreeMap;
+use std::io::{BufWriter, Read};
 use std::path;
 
+use floem::peniko::Color;
 use floem::reactive::{create_rw_signal, RwSignal};
+use floem::view::View;
+use floem::views::{stack_from_iter, text, Decorators, Stack};
+use floem::widgets::button;
 use reqwest::StatusCode;
+use sky_html::{Attribute, HTMLDocument, HTMLElement};
+
+use crate::styles::colors::*;
 
 // --------- //
 // Structure //
@@ -45,6 +54,10 @@ pub enum PageError
 	{
 		status: StatusCode
 	},
+	#[error("Impossible d'analyser l'HTML: {0}")]
+	ParseHTML(#[from] sky_html::HTMLParserError),
+	#[error("Impossible de convertir en UTF-8: {0}")]
+	Utf8(#[from] std::string::FromUtf8Error),
 }
 
 // -------------- //
@@ -65,8 +78,7 @@ impl PagesData
 
 impl Page
 {
-	// TODO: analyser le contenu
-	pub fn fetch(&self) -> Result<String, PageError>
+	pub fn render(&self) -> Result<(String, Stack), PageError>
 	{
 		match self {
 			| Page::File(page_path) => {
@@ -79,14 +91,20 @@ impl Page
 					)));
 				}
 
-				Ok(std::fs::read_to_string(page_path)?)
+				let content = std::fs::read_to_string(page_path)?;
+
+				let doc = HTMLDocument::from_file(page_path)?;
+				let els = self.build_stack(&doc.elements);
+				Ok((content, els))
 			}
 			| Page::Url(url) => {
 				Ok(reqwest::blocking::get(url.as_ref())
 					.map_err(PageError::Req)
-					.and_then(|response| {
+					.and_then(|mut response| {
 						if response.status().is_success() {
-							return Ok(response.text()?);
+							let doc = HTMLDocument::from_stream(&mut response)?;
+							let els = self.build_stack(&doc.elements);
+							return Ok((String::from("TODO"), els));
 						}
 
 						Err(PageError::InvalidReq {
@@ -95,5 +113,144 @@ impl Page
 					})?)
 			}
 		}
+	}
+
+	pub fn fetch(
+		&self,
+		url: impl ToString,
+	) -> Result<(String, Stack), PageError>
+	{
+		Ok(reqwest::blocking::get(url.to_string())
+			.map_err(PageError::Req)
+			.and_then(|mut response| {
+				if response.status().is_success() {
+					let doc = HTMLDocument::from_stream(&mut response)?;
+					let els = self.build_stack(&doc.elements);
+					return Ok((String::from("TODO"), els));
+				}
+
+				Err(PageError::InvalidReq {
+					status: response.status(),
+				})
+			})?)
+	}
+}
+
+impl Page
+{
+	fn build_stack(&self, tree: &BTreeMap<usize, HTMLElement>) -> Stack
+	{
+		let make_element = |el_name: &str,
+		                    attr: &[Attribute],
+		                    maybe_text: Option<String>| {
+			match el_name {
+				| "button" => {
+					let t = maybe_text.unwrap_or_default();
+					button(move || t.trim().to_owned()).any()
+				}
+
+				| "h1" => {
+					let t = maybe_text.unwrap_or_default();
+					text(t.trim()).style(|style| style.font_size(34.0)).any()
+				}
+				| "h2" => {
+					let t = maybe_text.unwrap_or_default();
+					text(t.trim()).style(|style| style.font_size(30.0)).any()
+				}
+				| "h3" => {
+					let t = maybe_text.unwrap_or_default();
+					text(t.trim()).style(|style| style.font_size(26.0)).any()
+				}
+				| "h4" => {
+					let t = maybe_text.unwrap_or_default();
+					text(t.trim()).style(|style| style.font_size(22.0)).any()
+				}
+				| "h5" => {
+					let t = maybe_text.unwrap_or_default();
+					text(t.trim()).style(|style| style.font_size(20.0)).any()
+				}
+				| "h6" => {
+					let t = maybe_text.unwrap_or_default();
+					text(t.trim()).style(|style| style.font_size(18.0)).any()
+				}
+
+				| "p" => {
+					let t = maybe_text.unwrap_or_default();
+					text(t.trim()).any()
+				}
+
+				| "strong" | "b" => {
+					let t = maybe_text.unwrap_or_default();
+					text(t.trim()).style(|style| style.font_bold()).any()
+				}
+
+				| "em" | "i" => {
+					let t = maybe_text.unwrap_or_default();
+					text(t.trim())
+						.style(|style| {
+							style.font_style(floem::cosmic_text::Style::Italic)
+						})
+						.any()
+				}
+
+				| "a" => {
+					let t = maybe_text.unwrap_or_default();
+					let href = attr.iter().find_map(|attr| {
+						attr.name
+							.local
+							.eq("href")
+							.then_some(attr.value.to_string())
+					});
+
+					text(t.trim())
+						.style(|style| style.color(Color::SKY_BLUE))
+						.on_click_cont(move |_| {
+							if let Some(url) = href.as_ref() {
+								println!("Clique sur le lien: {url}");
+							}
+						})
+						.any()
+				}
+
+				| name => {
+					text(format!("élément « {name} » non rendu"))
+						.style(|style| {
+							style.color(COLOR_GREY300).background(COLOR_RED400)
+						})
+						.any()
+				}
+			}
+		};
+
+		let mut list = vec![];
+
+		for (&element_id, element) in tree {
+			let parent_id = element.parent;
+
+			let element_name = element.name.local.to_string();
+
+			if [
+				"html", "body", "head", "title", "meta", "link", "script",
+				"style",
+			]
+			.contains(&element_name.as_str())
+			{
+				continue;
+			}
+
+			if element_id > parent_id && parent_id != 0 {
+				let floem_element = make_element(
+					&element_name,
+					&element.attributes,
+					element.text.as_ref().map(|t| t.to_string()),
+				);
+
+				list.push(floem_element);
+			} else {
+				dbg!(&element);
+			}
+		}
+
+		stack_from_iter(list).style(|style| style.flex_col())
 	}
 }

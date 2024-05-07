@@ -34,7 +34,11 @@ impl NavigationArea
 		))
 		.class(Gap24)
 		.style(|style| {
-			style.width(space(6)).items_center().padding_vert(space(2))
+			style
+				.min_width(space(6))
+				.width(space(6))
+				.items_center()
+				.padding_vert(space(2))
 		})
 	}
 }

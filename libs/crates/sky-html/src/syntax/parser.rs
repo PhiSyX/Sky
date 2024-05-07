@@ -43,17 +43,6 @@ where
 	// TODO: tâche non aboutie.
 	pub fn parse(mut self) -> Result<Vec<HTMLToken>, HTMLParserError>
 	{
-		let mut ret_tokens = Vec::new();
-
-		'tokenizer: while let Ok(tokens) = self.tokenizer.consume_next() {
-			for token in tokens {
-				if token.is_end_of_stream() {
-					break 'tokenizer;
-				}
-				ret_tokens.push(token);
-			}
-		}
-
-		Ok(ret_tokens)
+		todo!()
 	}
 }
