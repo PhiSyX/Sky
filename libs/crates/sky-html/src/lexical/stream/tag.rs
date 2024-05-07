@@ -42,6 +42,10 @@ pub trait HTMLTokenizerTagStream
 	fn handle_before_attribute_name_state(
 		&mut self,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
+
+	fn handle_attribute_name_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
 }
 
 // -------------- //
@@ -238,6 +242,66 @@ where
 						assert!(token.is_opened_tag());
 						token.start_empty_attribute_for_tag();
 					},
+				)))
+			}
+
+			| None => {
+				self.reconsume(HTMLTokenizerState::AfterAttributeName);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+		}
+	}
+
+	fn handle_attribute_name_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>
+	{
+		let update_attribute_name = |ch: char| {
+			move |token: &mut HTMLToken| {
+				assert!(token.is_opened_tag());
+				token.add_character_to_last_attribute_name_of_tag(ch);
+			}
+		};
+
+		match self.input.consume_next() {
+			| Some(cp) if cp.is__whitespace() || cp.one_of(['/', '>']) => {
+				self.reconsume(HTMLTokenizerState::AfterAttributeName);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is('=') => {
+				self.current_state
+					.switch(HTMLTokenizerState::BeforeAttributeValue);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is__upper_alphabetic() => {
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFn(Box::new(
+					update_attribute_name(cp.unit().to_ascii_lowercase()),
+				)))
+			}
+
+			| Some(cp) if !cp.is__valid() => {
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFnWithError(
+					Box::new(update_attribute_name(
+						char::REPLACEMENT_CHARACTER,
+					)),
+					HTMLLexicalError::unexpected_null_character(),
+				))
+			}
+
+			| Some(cp) if cp.one_of(['"', '\'', '<']) => {
+				let ch = cp.unit();
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFnWithError(
+					Box::new(update_attribute_name(ch)),
+					HTMLLexicalError::unexpected_character_in_attribute(ch),
+				))
+			}
+
+			| Some(cp) => {
+				let ch = cp.unit();
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFn(Box::new(
+					update_attribute_name(ch),
 				)))
 			}
 

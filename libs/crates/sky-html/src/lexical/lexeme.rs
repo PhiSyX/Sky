@@ -71,6 +71,18 @@ impl HTMLLexeme
 			name.push(ch);
 		}
 	}
+
+	pub fn add_character_to_last_attribute_name_of_tag(&mut self, ch: char)
+	{
+		assert!(matches!(self, Self::Tag { .. }));
+		if let Self::Tag { attributes, .. } = self {
+			let maybe_last_attribute = attributes.last_mut();
+			if let Some(last_attribute) = maybe_last_attribute {
+				last_attribute.0.push(ch);
+			}
+		}
+	}
+
 	pub fn start_empty_attribute_for_tag(&mut self)
 	{
 		assert!(matches!(self, Self::Tag { .. }));

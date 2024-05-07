@@ -87,6 +87,29 @@ pub enum HTMLLexicalErrorVariant
 	MissingEndTagName,
 
 	/// Cette erreur se produit si l'analyseur syntaxique rencontre un point de
+	/// code U+0022 ("), U+0027 (') ou U+003C (<) dans un nom d'attribut.
+	/// L'analyseur syntaxique inclut ces points de code dans le nom de
+	/// l'attribut.
+	///
+	/// NOTE(html): les points de code qui déclenchent cette erreur font
+	/// généralement partie d'une autre construction syntaxique et peuvent être
+	/// le signe d'une faute de frappe autour du nom de l'attribut.
+	///
+	/// Example: `<div foo<div>` En raison d'un point de code U+003E (>) oublié
+	/// après foo, l'analyseur syntaxique traite ce balisage comme un seul
+	/// élément div avec un attribut "foo<div".
+	///
+	/// Example: `<div id'bar'>` En raison d'un point de code U+003D (=) oublié
+	/// entre un nom d'attribut et une valeur, l'analyseur syntaxique traite ce
+	/// balisage comme un élément div dont l'attribut "id'bar'" a une valeur
+	/// vide.
+	#[error("Caractère '{found}' inattendu dans le nom d'un attribut")]
+	UnexpectedCharacterInAttributeName
+	{
+		found: char
+	},
+
+	/// Cette erreur se produit si l'analyseur syntaxique rencontre un point de
 	/// code U+003D (=) avant un nom d'attribut. Dans ce cas, l'analyseur
 	/// syntaxique traite U+003D (=) comme le premier point de code du nom de
 	/// l'attribut.
@@ -178,6 +201,17 @@ impl HTMLLexicalError
 	{
 		Self {
 			variant: HTMLLexicalErrorVariant::MissingEndTagName,
+			location: Location::new(),
+		}
+	}
+
+	pub const fn unexpected_character_in_attribute(found: char) -> Self
+	{
+		Self {
+			variant:
+				HTMLLexicalErrorVariant::UnexpectedCharacterInAttributeName {
+					found,
+				},
 			location: Location::new(),
 		}
 	}

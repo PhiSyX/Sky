@@ -40,6 +40,7 @@ pub enum HTMLTokenizerState
 	AfterAttributeName,
 	AttributeName,
 	BeforeAttributeName,
+	BeforeAttributeValue,
 	BogusComment,
 	Data,
 	EndTagOpen,
@@ -122,6 +123,9 @@ where
 				| HTMLTokenizerState::TagName => self.handle_tag_name_state(),
 				// 13.2.5.32 Before attribute name state
 				| HTMLTokenizerState::BeforeAttributeName => self.handle_before_attribute_name_state(),
+				// 13.2.5.33 Attribute name state
+				| HTMLTokenizerState::AttributeName => self.handle_attribute_name_state(),
+
 				|_ => return {
 					Ok(vec![HTMLToken::end_of_stream().with_location(self.current_location)])
 				},

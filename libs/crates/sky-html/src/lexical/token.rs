@@ -94,6 +94,11 @@ impl HTMLToken
 		self.lexeme.add_character_to_tag_name(ch);
 	}
 
+	pub fn add_character_to_last_attribute_name_of_tag(&mut self, ch: char)
+	{
+		self.lexeme.add_character_to_last_attribute_name_of_tag(ch);
+	}
+
 	pub fn start_empty_attribute_for_tag(&mut self)
 	{
 		self.lexeme.start_empty_attribute_for_tag();
