@@ -86,6 +86,21 @@ pub enum HTMLLexicalErrorVariant
 	#[error("Caractère '>' manquant")]
 	MissingEndTagName,
 
+	/// Cette erreur se produit si l'analyseur syntaxique rencontre un point de
+	/// code U+003D (=) avant un nom d'attribut. Dans ce cas, l'analyseur
+	/// syntaxique traite U+003D (=) comme le premier point de code du nom de
+	/// l'attribut.
+	///
+	/// NOTE(html): la raison courante de cette erreur est un nom d'attribut
+	/// oublié.
+	///
+	/// Example: `<div foo="bar" ="baz">` En raison d'un nom d'attribut oublié,
+	/// l'analyseur syntaxique traite ce balisage comme un élément div avec
+	/// deux attributs : un attribut "foo" avec une valeur "bar" et un attribut
+	/// "="baz"" avec une valeur vide.
+	#[error("Caractère '=' inattendu avant le nom d'un attribut")]
+	UnexpectedEqualsSignBeforeAttributeName,
+
 	/// Cette erreur se produit si l'analyseur rencontre un point de code
 	/// U+003F (?) alors que le premier point de code d'un nom de balise de
 	/// début est attendu. Le point de code U+003F (?) et tout le contenu qui
@@ -163,6 +178,15 @@ impl HTMLLexicalError
 	{
 		Self {
 			variant: HTMLLexicalErrorVariant::MissingEndTagName,
+			location: Location::new(),
+		}
+	}
+
+	pub const fn unexpected_equals_sign_before_attribute_name() -> Self
+	{
+		Self {
+			variant:
+				HTMLLexicalErrorVariant::UnexpectedEqualsSignBeforeAttributeName,
 			location: Location::new(),
 		}
 	}

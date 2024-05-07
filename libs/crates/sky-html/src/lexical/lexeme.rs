@@ -71,6 +71,23 @@ impl HTMLLexeme
 			name.push(ch);
 		}
 	}
+	pub fn start_empty_attribute_for_tag(&mut self)
+	{
+		assert!(matches!(self, Self::Tag { .. }));
+
+		if let Self::Tag { attributes, .. } = self {
+			attributes.push((String::default(), String::default()));
+		}
+	}
+
+	pub fn start_attribute_tag_with(&mut self, ch: char)
+	{
+		assert!(matches!(self, Self::Tag { .. }));
+
+		if let Self::Tag { attributes, .. } = self {
+			attributes.push((ch.to_string(), String::default()));
+		}
+	}
 }
 
 // -------------- //

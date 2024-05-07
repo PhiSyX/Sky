@@ -38,6 +38,10 @@ pub trait HTMLTokenizerTagStream
 	fn handle_tag_name_state(
 		&mut self,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
+
+	fn handle_before_attribute_name_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
 }
 
 // -------------- //
@@ -196,6 +200,50 @@ where
 					HTMLToken::end_of_stream(),
 					HTMLLexicalError::end_of_stream_in_tag(),
 				))
+			}
+		}
+	}
+
+	fn handle_before_attribute_name_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>
+	{
+		match self.input.consume_next() {
+			| Some(cp) if cp.is__whitespace() => {
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.one_of(['/', '>']) => {
+				self.reconsume(HTMLTokenizerState::AfterAttributeName);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is('=') => {
+				self.current_state.switch(HTMLTokenizerState::AttributeName);
+
+				let ch = cp.unit();
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFnWithError(
+					Box::new(move |token| {
+						assert!(token.is_opened_tag());
+						token.start_attribute_tag_with(ch);
+					}),
+					HTMLLexicalError::unexpected_equals_sign_before_attribute_name(),
+				))
+			}
+
+			| Some(_) => {
+				self.reconsume(HTMLTokenizerState::AttributeName);
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFn(Box::new(
+					|token| {
+						assert!(token.is_opened_tag());
+						token.start_empty_attribute_for_tag();
+					},
+				)))
+			}
+
+			| None => {
+				self.reconsume(HTMLTokenizerState::AfterAttributeName);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
 			}
 		}
 	}
