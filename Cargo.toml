@@ -7,4 +7,6 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace.dependencies]
+sky-html = { path = "libs/crates/sky-html" }
 sky-ui = { path = "libs/crates/sky-ui" }
+thiserror = "1.0.59"

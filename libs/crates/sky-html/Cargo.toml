@@ -1,0 +1,8 @@
+[package]
+name = "sky-html"
+version = { workspace = true }
+edition = { workspace = true }
+
+[dependencies]
+sky-lang = { path = "../sky-lang" }
+thiserror = { workspace = true }

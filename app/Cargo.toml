@@ -10,5 +10,5 @@ floem = { git = "https://github.com/SerialForker/floem.git", rev = "d87a6a1b38ff
 
 paste = { version = "1.0.14" }
 reqwest = { version = "0.12.4", features = ["blocking"] }
-thiserror = "1.0.59"
+thiserror = { workspace = true }
 url = "2.5.0"
