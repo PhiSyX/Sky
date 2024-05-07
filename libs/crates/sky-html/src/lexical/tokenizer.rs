@@ -112,6 +112,8 @@ where
 				| HTMLTokenizerState::Data => self.handle_data_state(),
 				// 13.2.5.6 Tag open state
 				| HTMLTokenizerState::TagOpen => self.handle_tag_open_state(),
+				// 13.2.5.7 End tag open state
+				| HTMLTokenizerState::EndTagOpen => self.handle_end_tag_open_state(),
 				|_ => return {
 					Ok(vec![HTMLToken::end_of_stream().with_location(self.current_location)])
 				},

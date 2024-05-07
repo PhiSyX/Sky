@@ -30,6 +30,10 @@ pub trait HTMLTokenizerTagStream
 	fn handle_tag_open_state(
 		&mut self,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
+
+	fn handle_end_tag_open_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
 }
 
 // -------------- //
@@ -89,6 +93,48 @@ where
 					update: HTMLToken::end_of_stream(),
 					error: HTMLLexicalError::end_of_stream_before_tag_name(),
 				})
+			}
+		}
+	}
+
+	fn handle_end_tag_open_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>
+	{
+		match self.input.consume_next() {
+			| Some(cp) if cp.is__alphabetic() => {
+				self.reconsume(HTMLTokenizerState::TagName);
+				ControlFlow::Continue(HTMLTokenizerOk::Update(
+					HTMLToken::end_tag(),
+				))
+			}
+
+			| Some(cp) if cp.is('>') => {
+				self.current_state.switch(HTMLTokenizerState::Data);
+				ControlFlow::Break(HTMLTokenizerErr::Emit(
+					HTMLLexicalError::missing_end_tag_name(),
+				))
+			}
+
+			| Some(cp) => {
+				self.reconsume(HTMLTokenizerState::BogusComment);
+				ControlFlow::Break(HTMLTokenizerErr::Update(
+					HTMLToken::empty_comment(),
+					HTMLLexicalError::invalid_first_character_of_tag_name(
+						cp.unit(),
+					),
+				))
+			}
+
+			| None => {
+				ControlFlow::Continue(HTMLTokenizerOk::ManyEmitWithError(
+					vec![
+						HTMLToken::character('<'),
+						HTMLToken::character('/'),
+						HTMLToken::end_of_stream(),
+					],
+					HTMLLexicalError::end_of_stream_before_tag_name(),
+				))
 			}
 		}
 	}

@@ -32,6 +32,17 @@ pub struct HTMLToken
 
 impl HTMLToken
 {
+	pub const fn character(ch: char) -> Self
+	{
+		Self {
+			lexeme: HTMLLexeme::Character(ch),
+			location: Location::new(),
+		}
+	}
+}
+
+impl HTMLToken
+{
 	pub const fn empty_comment() -> Self
 	{
 		Self {
@@ -43,6 +54,18 @@ impl HTMLToken
 
 impl HTMLToken
 {
+	pub fn end_tag() -> Self
+	{
+		Self {
+			lexeme: HTMLLexeme::Tag {
+				state: TagState::Closed,
+				name: Default::default(),
+				attributes: Default::default(),
+			},
+			location: Location::new(),
+		}
+	}
+
 	pub fn start_tag() -> Self
 	{
 		Self {

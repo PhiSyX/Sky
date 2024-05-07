@@ -34,6 +34,52 @@ pub struct HTMLLexicalError
 #[derive(thiserror::Error)]
 pub enum HTMLLexicalErrorVariant
 {
+	/// Cette erreur se produit si l'analyseur syntaxique rencontre la fin du
+	/// flux d'entrée où un nom de balise est attendu. Dans ce cas, l'analyseur
+	/// traite le début d'une balise de début (<) ou d'une balise de fin (</)
+	/// comme du contenu textuel.
+	#[error("Fin du flux avant le nom de balise")]
+	EndOfStreamBeforeTagName,
+
+	/// Cette erreur se produit si l'analyseur rencontre un point de code
+	/// qui n'est pas un alpha ASCII où le premier point de code d'une
+	/// balise de début ou d'une balise de fin est attendu. Si une balise
+	/// de début était attendue, ce point de code et un U+003C (<) qui le
+	/// précède sont traités comme du contenu texte, et tout le contenu
+	/// qui suit est traité comme du balisage. En revanche, si une balise
+	/// de fin était attendue, ce point de code et tout le contenu qui
+	/// suit jusqu'à un point de code U+003E (>) (s'il est présent) ou
+	/// jusqu'à la fin du flux d'entrée est traité comme un commentaire.
+	///
+	/// Example: `<42></42>`
+	///
+	/// Parsed into:
+	///   |- html
+	///      |- head
+	///      |- body
+	///         |- #text: <42>
+	///         |- #comment: 42
+	///
+	/// NOTE(html): alors que le premier point de code d'un nom de balise est
+	/// limité à un alpha ASCII, un large éventail de points de code (y
+	/// compris des chiffres ASCII) est autorisé dans les positions
+	/// suivantes.
+	#[error(
+		"Le premier caractère du nom de la balise '{found}' est invalide, \
+		 caractère alphabétique attendu"
+	)]
+	InvalidFirstCharacterOfTagName
+	{
+		found: char
+	},
+
+	/// Cette erreur se produit si l'analyseur rencontre un point de code
+	/// U+003E (>) là où un nom de balise de fin est attendu, c'est-à-dire </>.
+	/// L'analyseur syntaxique ignore l'ensemble de la séquence de points de
+	/// code "</>".
+	#[error("Caractère '>' manquant")]
+	MissingEndTagName,
+
 	/// Cette erreur se produit si l'analyseur rencontre un point de code
 	/// U+003F (?) alors que le premier point de code d'un nom de balise de
 	/// début est attendu. Le point de code U+003F (?) et tout le contenu qui
@@ -73,10 +119,36 @@ pub enum HTMLLexicalErrorVariant
 
 impl HTMLLexicalError
 {
+	pub const fn end_of_stream_before_tag_name() -> Self
+	{
+		Self {
+			variant: HTMLLexicalErrorVariant::EndOfStreamBeforeTagName,
+			location: Location::new(),
+		}
+	}
+
 	pub const fn idk() -> Self
 	{
 		Self {
 			variant: HTMLLexicalErrorVariant::Unknown,
+			location: Location::new(),
+		}
+	}
+
+	pub const fn invalid_first_character_of_tag_name(found: char) -> Self
+	{
+		Self {
+			variant: HTMLLexicalErrorVariant::InvalidFirstCharacterOfTagName {
+				found,
+			},
+			location: Location::new(),
+		}
+	}
+
+	pub const fn missing_end_tag_name() -> Self
+	{
+		Self {
+			variant: HTMLLexicalErrorVariant::MissingEndTagName,
 			location: Location::new(),
 		}
 	}
