@@ -365,39 +365,91 @@ where
 			}
 		};
 
-		match self.input.consume_next() {
-			| Some(cp) if quote.filter(|&q| q == cp.unit()).is_some() => {
-				self.current_state
-					.switch(HTMLTokenizerState::AfterAttributeValue { quote });
-				ControlFlow::Continue(HTMLTokenizerOk::None)
-			}
+		if let Some(quoted) = quote {
+			match self.input.consume_next() {
+				| Some(cp) if quoted == cp.unit() => {
+					self.current_state.switch(
+						HTMLTokenizerState::AfterAttributeValue { quote },
+					);
+					ControlFlow::Continue(HTMLTokenizerOk::None)
+				}
 
-			// TODO: character reference
-			| Some(cp) if cp.is('&') => {
-				ControlFlow::Continue(HTMLTokenizerOk::None)
-			}
+				// TODO: character reference
+				| Some(cp) if cp.is('&') => {
+					ControlFlow::Continue(HTMLTokenizerOk::None)
+				}
 
-			| Some(cp) if !cp.is__valid() => {
-				ControlFlow::Continue(HTMLTokenizerOk::UpdateFnWithError(
-					Box::new(update_attribute_value(
-						char::REPLACEMENT_CHARACTER,
-					)),
-					HTMLLexicalError::unexpected_null_character(),
-				))
-			}
+				| Some(cp) if !cp.is__valid() => {
+					ControlFlow::Continue(HTMLTokenizerOk::UpdateFnWithError(
+						Box::new(update_attribute_value(
+							char::REPLACEMENT_CHARACTER,
+						)),
+						HTMLLexicalError::unexpected_null_character(),
+					))
+				}
 
-			| Some(cp) => {
-				ControlFlow::Continue(HTMLTokenizerOk::UpdateFn(Box::new(
-					update_attribute_value(cp.unit()),
-				)))
-			}
+				| Some(cp) => {
+					ControlFlow::Continue(HTMLTokenizerOk::UpdateFn(Box::new(
+						update_attribute_value(cp.unit()),
+					)))
+				}
 
-			| None => {
-				// This is an eof-in-tag parse error. Emit an end-of-file token.
-				ControlFlow::Continue(HTMLTokenizerOk::EmitWithError(
-					HTMLToken::end_of_stream(),
-					HTMLLexicalError::end_of_stream_in_tag(),
-				))
+				| None => {
+					// This is an eof-in-tag parse error. Emit an end-of-file
+					// token.
+					ControlFlow::Continue(HTMLTokenizerOk::EmitWithError(
+						HTMLToken::end_of_stream(),
+						HTMLLexicalError::end_of_stream_in_tag(),
+					))
+				}
+			}
+		} else {
+			match self.input.consume_next() {
+				| Some(cp) if cp.is__whitespace() => {
+					self.current_state
+						.switch(HTMLTokenizerState::BeforeAttributeName);
+					ControlFlow::Continue(HTMLTokenizerOk::None)
+				}
+
+				// TODO: character reference
+				| Some(cp) if cp.is('&') => {
+					ControlFlow::Continue(HTMLTokenizerOk::None)
+				}
+
+				| Some(cp) if cp.is('>') => {
+					self.current_state.switch(HTMLTokenizerState::Data);
+					ControlFlow::Continue(HTMLTokenizerOk::EmitCurrent)
+				}
+
+				| Some(cp) if !cp.is__valid() => {
+					ControlFlow::Continue(HTMLTokenizerOk::UpdateFnWithError(
+						Box::new(update_attribute_value(
+							char::REPLACEMENT_CHARACTER,
+						)),
+						HTMLLexicalError::unexpected_null_character(),
+					))
+				}
+
+				| Some(cp) if cp.one_of(['"', '\'', '<', '=', '`']) => {
+					ControlFlow::Continue(HTMLTokenizerOk::UpdateFnWithError(
+						Box::new(update_attribute_value(cp.unit())),
+						HTMLLexicalError::unexpected_character_in_unquoted_attribute_value(cp.unit()),
+					))
+				}
+
+				| Some(cp) => {
+					ControlFlow::Continue(HTMLTokenizerOk::UpdateFn(Box::new(
+						update_attribute_value(cp.unit()),
+					)))
+				}
+
+				| None => {
+					// This is an eof-in-tag parse error. Emit an end-of-file token.
+					ControlFlow::Continue(
+						HTMLTokenizerOk::EmitWithError(HTMLToken::end_of_stream(),
+						HTMLLexicalError::end_of_stream_in_tag())
+					)
+				}
 			}
 		}
 	}

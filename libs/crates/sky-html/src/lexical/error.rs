@@ -116,6 +116,29 @@ pub enum HTMLLexicalErrorVariant
 	},
 
 	/// Cette erreur se produit si l'analyseur syntaxique rencontre un point de
+	/// code U+0022 ("), U+0027 ('), U+003C (<), U+003D (=) ou U+0060 (`) dans
+	/// une valeur d'attribut (unquoted). L'analyseur syntaxique inclut ces
+	/// points de code dans la valeur de l'attribut.
+	///
+	/// NOTE(html) 1: les points de code qui déclenchent cette erreur font
+	/// généralement partie d'une autre construction syntaxique et peuvent être
+	/// le signe d'une faute de frappe autour de la valeur de l'attribut.
+	///
+	/// NOTE(html) 2: U+0060 (`) figure dans la liste des points de code qui
+	/// déclenchent cette erreur parce que certains agents utilisateurs anciens
+	/// le traitent comme un guillemet.
+	///
+	/// Exemple: `<div foo=b'ar'>` En raison d'un point de code U+0027 (') mal
+	/// placé, l'analyseur définit la valeur de l'attribut "foo" à "b'ar'".
+	#[error(
+		"Caractère '{found}' inattendu dans la valeur d'un attribut sans quote"
+	)]
+	UnexpectedCharacterInUnquotedAttributeValue
+	{
+		found: char
+	},
+
+	/// Cette erreur se produit si l'analyseur syntaxique rencontre un point de
 	/// code U+003D (=) avant un nom d'attribut. Dans ce cas, l'analyseur
 	/// syntaxique traite U+003D (=) comme le premier point de code du nom de
 	/// l'attribut.
@@ -224,6 +247,19 @@ impl HTMLLexicalError
 		Self {
 			variant:
 				HTMLLexicalErrorVariant::UnexpectedCharacterInAttributeName {
+					found,
+				},
+			location: Location::new(),
+		}
+	}
+
+	pub const fn unexpected_character_in_unquoted_attribute_value(
+		found: char,
+	) -> Self
+	{
+		Self {
+			variant:
+				HTMLLexicalErrorVariant::UnexpectedCharacterInUnquotedAttributeValue {
 					found,
 				},
 			location: Location::new(),
