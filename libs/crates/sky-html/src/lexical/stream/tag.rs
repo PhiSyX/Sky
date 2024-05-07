@@ -47,6 +47,10 @@ pub trait HTMLTokenizerTagStream
 		&mut self,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
 
+	fn handle_after_attribute_name_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
+
 	fn handle_before_attribute_value_state(
 		&mut self,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
@@ -171,7 +175,6 @@ where
 	{
 		let update_tag_name = |ch: char| {
 			move |token: &mut HTMLToken| {
-				assert!(token.is_opened_tag());
 				token.add_character_to_tag_name(ch);
 			}
 		};
@@ -326,6 +329,50 @@ where
 		}
 	}
 
+	fn handle_after_attribute_name_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>
+	{
+		match self.input.consume_next() {
+			| Some(cp) if cp.is__whitespace() => {
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is('/') => {
+				self.current_state
+					.switch(HTMLTokenizerState::SelfClosingStartTag);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is('=') => {
+				self.current_state
+					.switch(HTMLTokenizerState::BeforeAttributeValue);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is('>') => {
+				self.current_state.switch(HTMLTokenizerState::Data);
+				ControlFlow::Continue(HTMLTokenizerOk::EmitCurrent)
+			}
+
+			| Some(_) => {
+				self.reconsume(HTMLTokenizerState::AttributeName);
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFn(Box::new(
+					|token| {
+						token.start_empty_attribute_for_tag();
+					},
+				)))
+			}
+
+			| None => {
+				ControlFlow::Continue(HTMLTokenizerOk::EmitWithError(
+					HTMLToken::end_of_stream(),
+					HTMLLexicalError::end_of_stream_in_tag(),
+				))
+			}
+		}
+	}
+
 	fn handle_before_attribute_value_state(
 		&mut self,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>
@@ -400,8 +447,6 @@ where
 				}
 
 				| None => {
-					// This is an eof-in-tag parse error. Emit an end-of-file
-					// token.
 					ControlFlow::Continue(HTMLTokenizerOk::EmitWithError(
 						HTMLToken::end_of_stream(),
 						HTMLLexicalError::end_of_stream_in_tag(),

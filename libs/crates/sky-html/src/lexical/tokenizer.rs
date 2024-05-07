@@ -144,6 +144,8 @@ where
 				| HTMLTokenizerState::BeforeAttributeName => self.handle_before_attribute_name_state(),
 				// 13.2.5.33 Attribute name state
 				| HTMLTokenizerState::AttributeName => self.handle_attribute_name_state(),
+				// 13.2.5.34 After attribute name state
+				| HTMLTokenizerState::AfterAttributeName => self.handle_after_attribute_name_state(),
 				// 13.2.5.35 Before attribute value state
 				| HTMLTokenizerState::BeforeAttributeValue => self.handle_before_attribute_value_state(),
 				// 13.2.5.36 Attribute value (double-quoted) state
