@@ -32,6 +32,7 @@ pub struct HTMLToken
 
 impl HTMLToken
 {
+	/// Crée un jeton de caractère.
 	pub const fn character(ch: char) -> Self
 	{
 		Self {
@@ -43,6 +44,7 @@ impl HTMLToken
 
 impl HTMLToken
 {
+	/// Crée un jeton de commentaire vide.
 	pub const fn empty_comment() -> Self
 	{
 		Self {
@@ -54,6 +56,7 @@ impl HTMLToken
 
 impl HTMLToken
 {
+	/// Crée un jeton de balise de fin.
 	pub fn end_tag() -> Self
 	{
 		Self {
@@ -66,6 +69,7 @@ impl HTMLToken
 		}
 	}
 
+	/// Crée un jeton de balise de début.
 	pub fn start_tag() -> Self
 	{
 		Self {
@@ -78,6 +82,7 @@ impl HTMLToken
 		}
 	}
 
+	/// Vérifie que le jeton est une balise ouverte.
 	pub const fn is_opened_tag(&self) -> bool
 	{
 		matches!(
@@ -89,21 +94,26 @@ impl HTMLToken
 		)
 	}
 
+	/// Vérifie que le jeton est une balise ouverte.
 	pub fn add_character_to_tag_name(&mut self, ch: char)
 	{
 		self.lexeme.add_character_to_tag_name(ch);
 	}
 
+	/// Ajoute un caractère au dernier nom d'un attribut de la balise courante.
 	pub fn add_character_to_last_attribute_name_of_tag(&mut self, ch: char)
 	{
 		self.lexeme.add_character_to_last_attribute_name_of_tag(ch);
 	}
 
+	/// Ajoute un attribut vide pour la balise courante.
 	pub fn start_empty_attribute_for_tag(&mut self)
 	{
 		self.lexeme.start_empty_attribute_for_tag();
 	}
 
+	/// Ajoute un attribut avec comme nom le caractère donné pour la balise
+	/// courante.
 	pub fn start_attribute_tag_with(&mut self, ch: char)
 	{
 		self.lexeme.start_attribute_tag_with(ch);
@@ -112,6 +122,7 @@ impl HTMLToken
 
 impl HTMLToken
 {
+	/// Crée un jeton de fin de flux.
 	pub const fn end_of_stream() -> Self
 	{
 		Self {
@@ -120,6 +131,7 @@ impl HTMLToken
 		}
 	}
 
+	/// Vérifie que le jeton est un jeton de fin de flux.
 	pub const fn is_end_of_stream(&self) -> bool
 	{
 		matches!(&self.lexeme, HTMLLexeme::EndOfStream)
@@ -128,6 +140,7 @@ impl HTMLToken
 
 impl HTMLToken
 {
+	/// Définit la position du jeton dans le flux, la source.
 	pub fn with_location(mut self, location: Location) -> Self
 	{
 		self.location = location;

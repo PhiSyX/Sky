@@ -23,8 +23,12 @@ use super::token::HTMLToken;
 pub struct HTMLTokenizer<Input: Iterator>
 {
 	pub(crate) input: InputStream<Input>,
+	/// Jeton courant, ce jeton (peut / va) être modifié au fur & à mesure des
+	/// états.
 	current_token: Option<HTMLToken>,
+	/// Position du jeton, modifié à chaque itération.
 	pub(crate) current_location: Location,
+	/// État courant du fournisseur de jeton.
 	pub(crate) current_state: HTMLTokenizerState,
 }
 
@@ -126,7 +130,7 @@ where
 				// 13.2.5.33 Attribute name state
 				| HTMLTokenizerState::AttributeName => self.handle_attribute_name_state(),
 
-				|_ => return {
+				| _ => return {
 					Ok(vec![HTMLToken::end_of_stream().with_location(self.current_location)])
 				},
 			};

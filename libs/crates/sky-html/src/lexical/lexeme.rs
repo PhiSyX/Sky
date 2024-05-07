@@ -63,6 +63,7 @@ pub enum TagState
 
 impl HTMLLexeme
 {
+	/// Ajoute un caractère au nom de la balise courante.
 	pub fn add_character_to_tag_name(&mut self, ch: char)
 	{
 		assert!(matches!(self, Self::Tag { .. }));
@@ -72,6 +73,7 @@ impl HTMLLexeme
 		}
 	}
 
+	/// Ajoute un caractère au dernier nom d'un attribut de la balise courante.
 	pub fn add_character_to_last_attribute_name_of_tag(&mut self, ch: char)
 	{
 		assert!(matches!(self, Self::Tag { .. }));
@@ -83,6 +85,7 @@ impl HTMLLexeme
 		}
 	}
 
+	/// Ajoute un attribut vide pour la balise courante.
 	pub fn start_empty_attribute_for_tag(&mut self)
 	{
 		assert!(matches!(self, Self::Tag { .. }));
@@ -92,6 +95,8 @@ impl HTMLLexeme
 		}
 	}
 
+	/// Ajoute un attribut avec comme nom le caractère donné pour la balise
+	/// courante.
 	pub fn start_attribute_tag_with(&mut self, ch: char)
 	{
 		assert!(matches!(self, Self::Tag { .. }));
