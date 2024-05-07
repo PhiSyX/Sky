@@ -41,6 +41,12 @@ pub enum HTMLLexicalErrorVariant
 	#[error("Fin du flux avant le nom de balise")]
 	EndOfStreamBeforeTagName,
 
+	/// Cette erreur se produit si l'analyseur syntaxique rencontre la fin
+	/// du flux d'entrée dans une balise de début ou une balise de fin
+	/// (par exemple, `<div id=`). Une telle balise est ignorée.
+	#[error("Fin du flux dans la balise")]
+	EndOfStreamInTag,
+
 	/// Cette erreur se produit si l'analyseur rencontre un point de code
 	/// qui n'est pas un alpha ASCII où le premier point de code d'une
 	/// balise de début ou d'une balise de fin est attendu. Si une balise
@@ -123,6 +129,14 @@ impl HTMLLexicalError
 	{
 		Self {
 			variant: HTMLLexicalErrorVariant::EndOfStreamBeforeTagName,
+			location: Location::new(),
+		}
+	}
+
+	pub const fn end_of_stream_in_tag() -> Self
+	{
+		Self {
+			variant: HTMLLexicalErrorVariant::EndOfStreamInTag,
 			location: Location::new(),
 		}
 	}

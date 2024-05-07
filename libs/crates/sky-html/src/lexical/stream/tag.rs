@@ -34,6 +34,10 @@ pub trait HTMLTokenizerTagStream
 	fn handle_end_tag_open_state(
 		&mut self,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
+
+	fn handle_tag_name_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
 }
 
 // -------------- //
@@ -134,6 +138,63 @@ where
 						HTMLToken::end_of_stream(),
 					],
 					HTMLLexicalError::end_of_stream_before_tag_name(),
+				))
+			}
+		}
+	}
+
+	fn handle_tag_name_state(
+		&mut self,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>
+	{
+		let update_tag_name = |ch: char| {
+			move |token: &mut HTMLToken| {
+				assert!(token.is_opened_tag());
+				token.add_character_to_tag_name(ch);
+			}
+		};
+
+		match self.input.consume_next() {
+			| Some(cp) if cp.is__whitespace() => {
+				self.current_state
+					.switch(HTMLTokenizerState::BeforeAttributeName);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is('/') => {
+				self.current_state
+					.switch(HTMLTokenizerState::SelfClosingStartTag);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is('>') => {
+				self.current_state.switch(HTMLTokenizerState::Data);
+				ControlFlow::Continue(HTMLTokenizerOk::EmitCurrent)
+			}
+
+			| Some(cp) if cp.is__upper_alphabetic() => {
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFn(Box::new(
+					update_tag_name(cp.unit().to_ascii_lowercase()),
+				)))
+			}
+
+			| Some(cp) if !cp.is__valid() => {
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFnWithError(
+					Box::new(update_tag_name(char::REPLACEMENT_CHARACTER)),
+					HTMLLexicalError::unexpected_null_character(),
+				))
+			}
+
+			| Some(cp) => {
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFn(Box::new(
+					update_tag_name(cp.unit()),
+				)))
+			}
+
+			| None => {
+				ControlFlow::Continue(HTMLTokenizerOk::EmitWithError(
+					HTMLToken::end_of_stream(),
+					HTMLLexicalError::end_of_stream_in_tag(),
 				))
 			}
 		}

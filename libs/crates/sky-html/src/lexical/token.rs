@@ -77,6 +77,22 @@ impl HTMLToken
 			location: Location::new(),
 		}
 	}
+
+	pub const fn is_opened_tag(&self) -> bool
+	{
+		matches!(
+			&self.lexeme,
+			HTMLLexeme::Tag {
+				state: TagState::Opened,
+				..
+			}
+		)
+	}
+
+	pub fn add_character_to_tag_name(&mut self, ch: char)
+	{
+		self.lexeme.add_character_to_tag_name(ch);
+	}
 }
 
 impl HTMLToken

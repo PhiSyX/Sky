@@ -58,6 +58,22 @@ pub enum TagState
 }
 
 // -------------- //
+// Implémentation //
+// -------------- //
+
+impl HTMLLexeme
+{
+	pub fn add_character_to_tag_name(&mut self, ch: char)
+	{
+		assert!(matches!(self, Self::Tag { .. }));
+
+		if let Self::Tag { name, .. } = self {
+			name.push(ch);
+		}
+	}
+}
+
+// -------------- //
 // Implémentation // -> Interface
 // -------------- //
 

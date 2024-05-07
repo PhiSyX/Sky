@@ -37,10 +37,12 @@ pub struct HTMLTokenizer<Input: Iterator>
 #[derive(PartialEq, Eq)]
 pub enum HTMLTokenizerState
 {
+	BeforeAttributeName,
 	BogusComment,
 	Data,
 	EndTagOpen,
 	MarkupDeclarationOpen,
+	SelfClosingStartTag,
 	TagName,
 	TagOpen,
 }
@@ -114,6 +116,8 @@ where
 				| HTMLTokenizerState::TagOpen => self.handle_tag_open_state(),
 				// 13.2.5.7 End tag open state
 				| HTMLTokenizerState::EndTagOpen => self.handle_end_tag_open_state(),
+				// 13.2.5.8 Tag name state
+				| HTMLTokenizerState::TagName => self.handle_tag_name_state(),
 				|_ => return {
 					Ok(vec![HTMLToken::end_of_stream().with_location(self.current_location)])
 				},
