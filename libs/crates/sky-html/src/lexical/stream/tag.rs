@@ -55,6 +55,11 @@ pub trait HTMLTokenizerTagStream
 		&mut self,
 		quote: Option<char>,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
+
+	fn handle_after_attribute_value_state(
+		&mut self,
+		quote: Option<char>,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
 }
 
 // -------------- //
@@ -444,12 +449,50 @@ where
 				}
 
 				| None => {
-					// This is an eof-in-tag parse error. Emit an end-of-file token.
 					ControlFlow::Continue(
 						HTMLTokenizerOk::EmitWithError(HTMLToken::end_of_stream(),
 						HTMLLexicalError::end_of_stream_in_tag())
 					)
 				}
+			}
+		}
+	}
+
+	fn handle_after_attribute_value_state(
+		&mut self,
+		_: Option<char>,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>
+	{
+		match self.input.consume_next() {
+			| Some(cp) if cp.is__whitespace() => {
+				self.current_state
+					.switch(HTMLTokenizerState::BeforeAttributeName);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is('/') => {
+				self.current_state
+					.switch(HTMLTokenizerState::SelfClosingStartTag);
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if cp.is('>') => {
+				self.current_state.switch(HTMLTokenizerState::Data);
+				ControlFlow::Continue(HTMLTokenizerOk::EmitCurrent)
+			}
+
+			| Some(_) => {
+				self.reconsume(HTMLTokenizerState::BeforeAttributeName);
+				ControlFlow::Break(HTMLTokenizerErr::Emit(
+					HTMLLexicalError::missing_whitespace_between_attributes(),
+				))
+			}
+
+			| None => {
+				ControlFlow::Continue(HTMLTokenizerOk::EmitWithError(
+					HTMLToken::end_of_stream(),
+					HTMLLexicalError::end_of_stream_in_tag(),
+				))
 			}
 		}
 	}

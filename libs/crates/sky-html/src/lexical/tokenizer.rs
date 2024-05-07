@@ -150,6 +150,8 @@ where
 				// 13.2.5.37 Attribute value (single-quoted) state
 				// 13.2.5.38 Attribute value (unquoted) state
 				| HTMLTokenizerState::AttributeValue { quote } => self.handle_attribute_value_state(quote),
+				// 13.2.5.39 After attribute value (quoted) state
+				| HTMLTokenizerState::AfterAttributeValue { quote } => self.handle_after_attribute_value_state(quote),
 
 				| _ => return {
 					Ok(vec![HTMLToken::end_of_stream().with_location(self.current_location)])

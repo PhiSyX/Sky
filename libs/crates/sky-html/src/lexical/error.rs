@@ -92,6 +92,13 @@ pub enum HTMLLexicalErrorVariant
 	#[error("Caractère '>' manquant")]
 	MissingEndTagName,
 
+	/// Cette erreur se produit si l'analyseur rencontre des attributs qui ne
+	/// sont pas séparés par des espaces blancs ASCII (par exemple, `<div
+	/// id="foo"class="bar">`). Dans ce cas, l'analyseur se comporte comme si un
+	/// espace blanc ASCII était présent.
+	#[error("Espaces blancs manquant")]
+	MissingWhitespaceBetweenAttributes,
+
 	/// Cette erreur se produit si l'analyseur syntaxique rencontre un point de
 	/// code U+0022 ("), U+0027 (') ou U+003C (<) dans un nom d'attribut.
 	/// L'analyseur syntaxique inclut ces points de code dans le nom de
@@ -238,6 +245,14 @@ impl HTMLLexicalError
 	{
 		Self {
 			variant: HTMLLexicalErrorVariant::MissingEndTagName,
+			location: Location::new(),
+		}
+	}
+
+	pub const fn missing_whitespace_between_attributes() -> Self
+	{
+		Self {
+			variant: HTMLLexicalErrorVariant::MissingWhitespaceBetweenAttributes,
 			location: Location::new(),
 		}
 	}
