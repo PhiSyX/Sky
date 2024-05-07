@@ -77,10 +77,24 @@ impl HTMLLexeme
 	pub fn add_character_to_last_attribute_name_of_tag(&mut self, ch: char)
 	{
 		assert!(matches!(self, Self::Tag { .. }));
+
 		if let Self::Tag { attributes, .. } = self {
 			let maybe_last_attribute = attributes.last_mut();
 			if let Some(last_attribute) = maybe_last_attribute {
 				last_attribute.0.push(ch);
+			}
+		}
+	}
+
+	/// Ajoute un caractère à la valeur d'un attribut de la balise courante.
+	pub fn add_character_to_last_attribute_value_of_tag(&mut self, ch: char)
+	{
+		assert!(matches!(self, Self::Tag { .. }));
+
+		if let Self::Tag { attributes, .. } = self {
+			let maybe_last_attribute = attributes.last_mut();
+			if let Some(last_attribute) = maybe_last_attribute {
+				last_attribute.1.push(ch);
 			}
 		}
 	}

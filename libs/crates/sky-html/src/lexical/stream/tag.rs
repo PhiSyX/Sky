@@ -50,6 +50,11 @@ pub trait HTMLTokenizerTagStream
 	fn handle_before_attribute_value_state(
 		&mut self,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
+
+	fn handle_attribute_value_state(
+		&mut self,
+		quote: Option<char>,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>;
 }
 
 // -------------- //
@@ -345,6 +350,54 @@ where
 					quote: None,
 				});
 				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+		}
+	}
+
+	fn handle_attribute_value_state(
+		&mut self,
+		quote: Option<char>,
+	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>
+	{
+		let update_attribute_value = |ch: char| {
+			move |token: &mut HTMLToken| {
+				token.add_character_to_last_attribute_value_of_tag(ch);
+			}
+		};
+
+		match self.input.consume_next() {
+			| Some(cp) if quote.filter(|&q| q == cp.unit()).is_some() => {
+				self.current_state
+					.switch(HTMLTokenizerState::AfterAttributeValue { quote });
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			// TODO: character reference
+			| Some(cp) if cp.is('&') => {
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
+			| Some(cp) if !cp.is__valid() => {
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFnWithError(
+					Box::new(update_attribute_value(
+						char::REPLACEMENT_CHARACTER,
+					)),
+					HTMLLexicalError::unexpected_null_character(),
+				))
+			}
+
+			| Some(cp) => {
+				ControlFlow::Continue(HTMLTokenizerOk::UpdateFn(Box::new(
+					update_attribute_value(cp.unit()),
+				)))
+			}
+
+			| None => {
+				// This is an eof-in-tag parse error. Emit an end-of-file token.
+				ControlFlow::Continue(HTMLTokenizerOk::EmitWithError(
+					HTMLToken::end_of_stream(),
+					HTMLLexicalError::end_of_stream_in_tag(),
+				))
 			}
 		}
 	}

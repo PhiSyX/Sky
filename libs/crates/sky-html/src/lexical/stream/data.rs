@@ -44,8 +44,12 @@ where
 		&mut self,
 	) -> ControlFlow<HTMLTokenizerErr, HTMLTokenizerOk>
 	{
-		// TODO: U+0026 AMPERSAND (&)
 		match self.input.consume_next() {
+			// TODO: character reference
+			| Some(cp) if cp.is('&') => {
+				ControlFlow::Continue(HTMLTokenizerOk::None)
+			}
+
 			| Some(cp) if cp.is('<') => {
 				self.current_state.switch(HTMLTokenizerState::TagOpen);
 				ControlFlow::Continue(HTMLTokenizerOk::None)

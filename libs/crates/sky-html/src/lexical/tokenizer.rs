@@ -50,6 +50,13 @@ pub enum HTMLTokenizerState
 		// NOTE: unquoted = None
 		quote: Option<char>,
 	},
+	AfterAttributeValue
+	{
+		// NOTE: quoted   = Some('\'')
+		// NOTE: quoted   = Some('"')
+		// NOTE: unquoted = None
+		quote: Option<char>,
+	},
 	BeforeAttributeName,
 	BeforeAttributeValue,
 	BogusComment,
@@ -139,6 +146,10 @@ where
 				| HTMLTokenizerState::AttributeName => self.handle_attribute_name_state(),
 				// 13.2.5.35 Before attribute value state
 				| HTMLTokenizerState::BeforeAttributeValue => self.handle_before_attribute_value_state(),
+				// 13.2.5.36 Attribute value (double-quoted) state
+				// 13.2.5.37 Attribute value (single-quoted) state
+				// 13.2.5.38 Attribute value (unquoted) state
+				| HTMLTokenizerState::AttributeValue { quote } => self.handle_attribute_value_state(quote),
 
 				| _ => return {
 					Ok(vec![HTMLToken::end_of_stream().with_location(self.current_location)])

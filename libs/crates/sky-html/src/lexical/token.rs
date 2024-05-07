@@ -106,6 +106,13 @@ impl HTMLToken
 		self.lexeme.add_character_to_last_attribute_name_of_tag(ch);
 	}
 
+	/// Ajoute un caractère à la dernière valeur d'un attribut de la balise
+	/// courante.
+	pub fn add_character_to_last_attribute_value_of_tag(&mut self, ch: char)
+	{
+		self.lexeme.add_character_to_last_attribute_value_of_tag(ch);
+	}
+
 	/// Ajoute un attribut vide pour la balise courante.
 	pub fn start_empty_attribute_for_tag(&mut self)
 	{
