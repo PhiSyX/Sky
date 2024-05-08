@@ -31,10 +31,15 @@ pub struct ContentArea;
 
 impl ContentArea
 {
-	pub fn current_page(page: Page) -> AnyView
+	pub fn current_page(
+		state: ApplicationStateShared,
+		page: Page,
+	) -> AnyView
 	{
 		match page.render() {
-			| Ok((content, stack)) => {
+			| Ok(page_view) => {
+				state.title_data.set_title(page_view.new_title);
+
 				let left_content = scroll(
 					v_stack((
 						text("Prévisualisation du rendu") // don't format please
@@ -44,7 +49,7 @@ impl ContentArea
 									.font_style(Style::Italic)
 							}),
 						// NOTE: Ici qu'est injecté le contenu dynamiquement
-						stack.style(|style| {
+						page_view.dyn_content.style(|style| {
 							style.text_overflow(TextOverflow::Clip)
 						}),
 					))
@@ -61,7 +66,7 @@ impl ContentArea
 									.color(COLOR_GREY500)
 									.font_style(Style::Italic)
 							}),
-						text(content) // don't format please
+						text(page_view.raw_content) // don't format please
 							.style(|style| {
 								style.text_overflow(TextOverflow::Clip)
 							}),
@@ -87,16 +92,18 @@ impl ContentArea
 		}
 	}
 
+	// TODO: à améliorer
 	pub fn render(&self) -> impl View
 	{
 		let state: ApplicationStateShared = reactive::use_context() /* dfplz */
 			.expect("État de l'application");
 
 		let state_r = ApplicationStateShared::clone(&state);
+		let state_w = ApplicationStateShared::clone(&state);
 
 		dyn_container(
 			move || state_r.pages_data.current_page.get(),
-			Self::current_page,
+			move |page| Self::current_page(state_w.clone(), page),
 		)
 		.style(|style| style.padding(space(2)).flex_grow(1.0).size_full())
 		.style(move |style| {

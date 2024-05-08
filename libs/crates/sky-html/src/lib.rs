@@ -8,6 +8,8 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
+#![allow(dead_code)]
+
 mod lexical;
 mod syntax;
 
@@ -64,7 +66,7 @@ impl HTMLDocument
 	}
 
 	pub fn from_stream(
-		slice: &mut impl std::io::Read,
+		stream: &mut impl std::io::Read,
 	) -> Result<Self, HTMLParserError>
 	{
 		let this = Self {
@@ -74,7 +76,7 @@ impl HTMLDocument
 
 		let this = html5ever::parse_document(this, Default::default())
 			.from_utf8()
-			.read_from(slice)?;
+			.read_from(stream)?;
 
 		Ok(this)
 	}

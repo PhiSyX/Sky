@@ -11,6 +11,7 @@
 use std::collections::BTreeMap;
 use std::path;
 
+use floem::cosmic_text::Style;
 use floem::peniko::Color;
 use floem::reactive::{create_rw_signal, RwSignal};
 use floem::view::View;
@@ -31,6 +32,17 @@ pub struct PagesData
 	// pub pages: Vec<Page>,
 	// pages: (ReadSignal<String>, WriteSignal<String>),
 }
+
+pub struct PageView
+{
+	pub raw_content: String,
+	pub new_title: String,
+	pub dyn_content: Stack,
+}
+
+// ----------- //
+// Énumération //
+// ----------- //
 
 #[derive(Debug)]
 #[derive(Clone)]
@@ -77,7 +89,7 @@ impl PagesData
 
 impl Page
 {
-	pub fn render(&self) -> Result<(String, Stack), PageError>
+	pub fn render(&self) -> Result<PageView, PageError>
 	{
 		match self {
 			| Page::File(page_path) => self.open_file(page_path),
@@ -88,7 +100,7 @@ impl Page
 	pub fn open_file(
 		&self,
 		filepath: impl AsRef<path::Path>,
-	) -> Result<(String, Stack), PageError>
+	) -> Result<PageView, PageError>
 	{
 		// TODO: autoriser plusieurs extensions.
 		if filepath
@@ -106,22 +118,23 @@ impl Page
 		let content = std::fs::read_to_string(filepath.as_ref())?;
 
 		let doc = HTMLDocument::from_file(filepath)?;
-		let els = self.build_stack(&doc.elements)?;
-		Ok((content, els))
+
+		let mut page_view = self.build_page_view(&doc.elements)?;
+		page_view.raw_content = content;
+
+		Ok(page_view)
 	}
 
-	pub fn fetch(
-		&self,
-		url: impl ToString,
-	) -> Result<(String, Stack), PageError>
+	pub fn fetch(&self, url: impl ToString) -> Result<PageView, PageError>
 	{
 		reqwest::blocking::get(url.to_string())
 			.map_err(PageError::Req)
 			.and_then(|mut response| {
 				if response.status().is_success() {
 					let doc = HTMLDocument::from_stream(&mut response)?;
-					let els = self.build_stack(&doc.elements)?;
-					return Ok((String::from("TODO"), els));
+					let mut page_view = self.build_page_view(&doc.elements)?;
+					page_view.raw_content = String::from("TODO");
+					return Ok(page_view);
 				}
 
 				Err(PageError::InvalidReq {
@@ -133,110 +146,147 @@ impl Page
 
 impl Page
 {
-	fn build_stack(
+	// TODO: a améliorer
+	fn build_page_view(
 		&self,
 		tree: &BTreeMap<usize, HTMLElement>,
-	) -> Result<Stack, PageError>
+	) -> Result<PageView, PageError>
 	{
-		let make_element = |el_name: &str,
-		                    attr: &[Attribute],
-		                    maybe_text: Option<String>| {
-			match el_name {
-				| "button" => {
-					let t = maybe_text.unwrap_or_default();
-					button(move || t.trim().to_owned()).any()
-				}
+		let mut list = vec![];
 
-				| "h1" => {
-					let t = maybe_text.unwrap_or_default();
-					text(t.trim()).style(|style| style.font_size(34.0)).any()
-				}
-				| "h2" => {
-					let t = maybe_text.unwrap_or_default();
-					text(t.trim()).style(|style| style.font_size(30.0)).any()
-				}
-				| "h3" => {
-					let t = maybe_text.unwrap_or_default();
-					text(t.trim()).style(|style| style.font_size(26.0)).any()
-				}
-				| "h4" => {
-					let t = maybe_text.unwrap_or_default();
-					text(t.trim()).style(|style| style.font_size(22.0)).any()
-				}
-				| "h5" => {
-					let t = maybe_text.unwrap_or_default();
-					text(t.trim()).style(|style| style.font_size(20.0)).any()
-				}
-				| "h6" => {
-					let t = maybe_text.unwrap_or_default();
-					text(t.trim()).style(|style| style.font_size(18.0)).any()
-				}
-
-				| "p" => {
-					let t = maybe_text.unwrap_or_default();
-					text(t.trim()).any()
-				}
-
-				| "strong" | "b" => {
-					let t = maybe_text.unwrap_or_default();
-					text(t.trim()).style(|style| style.font_bold()).any()
-				}
-
-				| "em" | "i" => {
-					let t = maybe_text.unwrap_or_default();
-					text(t.trim())
-						.style(|style| {
-							style.font_style(floem::cosmic_text::Style::Italic)
-						})
-						.any()
-				}
-
-				| "a" => {
-					let t = maybe_text.unwrap_or_default();
-					let href = attr.iter().find_map(|attr| {
-						attr.name
-							.local
-							.eq("href")
-							.then_some(attr.value.to_string())
-					});
-
-					text(t.trim())
-						.style(|style| style.color(Color::SKY_BLUE))
-						.on_click_cont(move |_| {
-							if let Some(url) = href.as_ref() {
-								println!("Clique sur le lien: {url}");
-							}
-						})
-						.any()
-				}
-
-				| name => {
-					text(format!("élément « {name} » non rendu"))
-						.style(|style| {
-							style.color(COLOR_GREY300).background(COLOR_RED400)
-						})
-						.any()
-				}
-			}
+		let mut temp_page_view = PageView {
+			raw_content: Default::default(),
+			new_title: Default::default(),
+			dyn_content: stack_from_iter([text(0)]),
 		};
 
-		let mut list = vec![];
+		let mut make_element =
+			|el_name: &str, attrs: &[Attribute], maybe_text: Option<String>| {
+				match el_name {
+					| "title" => {
+						let t = maybe_text.unwrap_or_default();
+						temp_page_view.new_title = t;
+						text("").any()
+					}
+
+					| "button" => {
+						let t = maybe_text.unwrap_or_default();
+						button(move || t.trim().to_owned()).any()
+					}
+
+					| "h1" => {
+						let t = maybe_text.unwrap_or_default();
+						text(t.trim())
+							.style(|style| style.font_size(34.0))
+							.any()
+					}
+					| "h2" => {
+						let t = maybe_text.unwrap_or_default();
+						text(t.trim())
+							.style(|style| style.font_size(30.0))
+							.any()
+					}
+					| "h3" => {
+						let t = maybe_text.unwrap_or_default();
+						text(t.trim())
+							.style(|style| style.font_size(26.0))
+							.any()
+					}
+					| "h4" => {
+						let t = maybe_text.unwrap_or_default();
+						text(t.trim())
+							.style(|style| style.font_size(22.0))
+							.any()
+					}
+					| "h5" => {
+						let t = maybe_text.unwrap_or_default();
+						text(t.trim())
+							.style(|style| style.font_size(20.0))
+							.any()
+					}
+					| "h6" => {
+						let t = maybe_text.unwrap_or_default();
+						text(t.trim())
+							.style(|style| style.font_size(18.0))
+							.any()
+					}
+
+					| "p" => {
+						let t = maybe_text.unwrap_or_default();
+						text(t.trim()).any()
+					}
+
+					| "strong" | "b" => {
+						let t = maybe_text.unwrap_or_default();
+						text(t.trim()).style(|style| style.font_bold()).any()
+					}
+
+					| "em" | "i" => {
+						let t = maybe_text.unwrap_or_default();
+						text(t.trim())
+							.style(|style| {
+								style.font_style(
+									floem::cosmic_text::Style::Italic,
+								)
+							})
+							.any()
+					}
+
+					| "a" => {
+						let t = maybe_text.unwrap_or_default();
+						let href = attrs.iter().find_map(|attr| {
+							attr.name
+								.local
+								.eq("href")
+								.then_some(attr.value.to_string())
+						});
+
+						text(t.trim())
+							.style(|style| style.color(Color::STEEL_BLUE))
+							.on_click_cont(move |_| {
+								if let Some(url) = href.as_ref() {
+									println!("Clique sur le lien: {url}");
+								}
+							})
+							.any()
+					}
+
+					| name => {
+						let warning = format!("Élément « {name} » non rendu");
+
+						println!("WARN: {} / {attrs:?}", &warning);
+
+						text(warning)
+							.style(|style| {
+								style
+									.padding(4)
+									.background(Color::DARK_RED)
+									.color(Color::WHITE)
+									.border(1)
+									.border_radius(2.0)
+									.border_color(Color::RED)
+									.font_style(Style::Italic)
+							})
+							.any()
+					}
+				}
+			};
 
 		for (&element_id, element) in tree {
 			let parent_id = element.parent;
 
 			let element_name = element.name.local.to_string();
 
-			if [
-				"html", "body", "head", "title", "meta", "link", "script",
-				"style",
-			]
-			.contains(&element_name.as_str())
+			if ["html", "body", "head", "meta", "link", "script", "style"]
+				.contains(&element_name.as_str())
 			{
 				continue;
 			}
 
 			if element_id > parent_id && parent_id != 0 {
+				// Traiter le parent?
+				//let parent = tree.get(&parent_id).unwrap();
+
 				let floem_element = make_element(
 					&element_name,
 					&element.attributes,
@@ -249,6 +299,8 @@ impl Page
 			}
 		}
 
-		Ok(stack_from_iter(list).style(|style| style.flex_col()))
+		temp_page_view.dyn_content =
+			stack_from_iter(list).style(|style| style.flex_col());
+		Ok(temp_page_view)
 	}
 }

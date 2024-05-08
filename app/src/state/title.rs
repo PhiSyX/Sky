@@ -44,10 +44,15 @@ impl TitleData
 		self.signal.1
 	}
 
-	pub fn set_title(&self, new_title: impl Into<String>)
+	pub fn set_title(&self, new_title: impl ToString)
 	{
 		self.signal.1.update(move |current_title| {
-			let title = new_title.into();
+			let title = new_title.to_string();
+			if title.trim().is_empty() {
+				*current_title = self.default.to_string();
+				return;
+			}
+
 			if title.trim() == self.default {
 				return;
 			}
