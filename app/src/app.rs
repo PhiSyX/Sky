@@ -192,24 +192,16 @@ impl Window
 				})
 				.class(IconWithOpacity, |style| {
 					style
-						.apply_if(
-							state.theme_data.read().get()
-								== ThemeSettings::Dark,
-							|s| {
-								s.color(Color::WHITE.with_alpha_factor(0.5))
-									.hover(|style| style.color(Color::WHITE))
-									.focus(|style| style.color(Color::WHITE))
-							},
-						)
-						.apply_if(
-							state.theme_data.read().get()
-								== ThemeSettings::Light,
-							|s| {
-								s.color(Color::BLACK.with_alpha_factor(0.5))
-									.hover(|style| style.color(Color::BLACK))
-									.focus(|style| style.color(Color::BLACK))
-							},
-						)
+						.apply_if(state.theme_data.is_current_dark(), |s| {
+							s.color(Color::WHITE.with_alpha_factor(0.5))
+								.hover(|style| style.color(Color::WHITE))
+								.focus(|style| style.color(Color::WHITE))
+						})
+						.apply_if(state.theme_data.is_current_light(), |s| {
+							s.color(Color::BLACK.with_alpha_factor(0.5))
+								.hover(|style| style.color(Color::BLACK))
+								.focus(|style| style.color(Color::BLACK))
+						})
 						.padding(space(1))
 						.cursor(style::CursorStyle::Pointer)
 						.transition(
