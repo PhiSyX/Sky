@@ -15,9 +15,8 @@ use std::path;
 use floem::cosmic_text::Style;
 use floem::peniko::Color;
 use floem::reactive::{create_rw_signal, RwSignal};
-use floem::view::{AnyView, View};
-use floem::views::{stack_from_iter, text, Decorators, Stack};
-use floem::widgets::button;
+use floem::views::{button, stack_from_iter, text, Decorators, Stack};
+use floem::{AnyView, IntoView};
 use reqwest::StatusCode;
 use sky_html::{Attribute, HTMLDocument, HTMLElement};
 
@@ -227,7 +226,7 @@ impl Page
 						if let Some(t) = maybe_text {
 							let t = t.trim();
 							if !t.is_empty() {
-								return Some(text(t).any());
+								return Some(text(t).into_any());
 							}
 						}
 
@@ -247,7 +246,7 @@ impl Page
 										.border_color(Color::RED)
 										.font_style(Style::Italic)
 								})
-								.any(),
+								.into_any(),
 						)
 					}
 				}
@@ -310,22 +309,22 @@ impl Page
 				});
 			}
 
-			element.any()
+			element.into_any()
 		})
 	}
 
 	fn make_bold_element(maybe_text: Option<&str>) -> Option<AnyView>
 	{
-		maybe_text
-			.filter(|s| !s.trim().is_empty())
-			.map(move |s| text(s.trim()).style(|style| style.font_bold()).any())
+		maybe_text.filter(|s| !s.trim().is_empty()).map(move |s| {
+			text(s.trim()).style(|style| style.font_bold()).into_any()
+		})
 	}
 
 	fn make_button_element(maybe_text: Option<String>) -> Option<AnyView>
 	{
 		maybe_text
 			.filter(|s| !s.trim().is_empty())
-			.map(move |s| button(move || s.trim().to_owned()).any())
+			.map(move |s| button(move || s.trim().to_owned()).into_any())
 	}
 
 	fn make_italic_element(maybe_text: Option<&str>) -> Option<AnyView>
@@ -333,7 +332,7 @@ impl Page
 		maybe_text.filter(|s| !s.trim().is_empty()).map(move |s| {
 			text(s.trim())
 				.style(|style| style.font_style(Style::Italic))
-				.any()
+				.into_any()
 		})
 	}
 
@@ -343,7 +342,7 @@ impl Page
 		maybe_text.filter(|s| !s.trim().is_empty()).map(move |s| {
 			text(s.trim())
 				.style(move |style| style.font_size(font_size))
-				.any()
+				.into_any()
 		})
 	}
 }

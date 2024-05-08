@@ -9,18 +9,9 @@
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 use floem::cosmic_text::Style;
-use floem::reactive;
 use floem::style::TextOverflow;
-use floem::view::{AnyView, View};
-use floem::views::{
-	dyn_container,
-	h_stack,
-	scroll,
-	stack,
-	text,
-	v_stack,
-	Decorators,
-};
+use floem::views::{dyn_container, h_stack, scroll, text, v_stack, Decorators};
+use floem::{reactive, AnyView, IntoView, View};
 
 use crate::state::{ApplicationStateShared, Page};
 use crate::styles::classes::align::gap::*;
@@ -45,8 +36,9 @@ impl ContentArea
 			| Ok(page_view) => {
 				state.title_data.set_title(page_view.new_title);
 
-				let dyn_content =
-					page_view.dyn_content.unwrap_or(stack(text("")));
+				let Some(dyn_content) = page_view.dyn_content else {
+					return text("").into_any();
+				};
 
 				if cfg!(debug_assertions) {
 					let left_content = scroll(
@@ -112,12 +104,12 @@ impl ContentArea
 				}
 				.class(Gap8)
 				.style(|style| style.size_full())
-				.any()
+				.into_any()
 			}
 			| Err(err) => {
 				text(err.to_string())
 					.style(|style| style.color(COLOR_RED600))
-					.any()
+					.into_any()
 			}
 		}
 	}
@@ -130,10 +122,12 @@ impl ContentArea
 		let state_r = ApplicationStateShared::clone(&state);
 		let state_w = ApplicationStateShared::clone(&state);
 
-		dyn_container(
-			move || state_r.pages_data.current_page.get(),
-			move |page| Self::current_page(state_w.clone(), page),
-		)
+		dyn_container(move || {
+			Self::current_page(
+				state_w.clone(),
+				state_r.pages_data.current_page.get(),
+			)
+		})
 		.style(|style| style.padding(space(2)).flex_grow(1.0).size_full())
 		.style(move |style| {
 			style

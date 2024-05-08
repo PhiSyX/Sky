@@ -8,8 +8,8 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::view::View;
 use floem::views::{h_stack, Decorators};
+use floem::View;
 
 use super::content::ContentArea;
 

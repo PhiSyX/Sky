@@ -10,9 +10,8 @@
 
 use floem::event::Event;
 use floem::style::CursorStyle;
-use floem::view::View;
 use floem::views::{h_stack, Decorators};
-use floem::{action, reactive, window};
+use floem::{action, reactive, window, View};
 
 use crate::components::icons::*;
 use crate::state::ApplicationStateShared;
@@ -94,7 +93,7 @@ impl WindowControlMinimize
 		self.attach_events(icon)
 	}
 
-	fn attach_events(&self, icon: impl View) -> impl View
+	fn attach_events(&self, icon: impl View + 'static) -> impl View
 	{
 		icon.on_click_cont(|_| {
 			action::minimize_window();
@@ -110,7 +109,7 @@ impl WindowControlMaximize
 		self.attach_events(icon)
 	}
 
-	fn attach_events(&self, icon: impl View) -> impl View
+	fn attach_events(&self, icon: impl View + 'static) -> impl View
 	{
 		icon.on_click_cont(|_| {
 			action::toggle_window_maximized();
@@ -126,7 +125,7 @@ impl WindowControlClose
 		self.attach_events(icon)
 	}
 
-	fn attach_events(&self, icon: impl View) -> impl View
+	fn attach_events(&self, icon: impl View + 'static) -> impl View
 	{
 		let wid = self.0;
 		icon.on_click_cont(move |_| {

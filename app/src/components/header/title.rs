@@ -9,9 +9,8 @@
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 use floem::action::set_window_title;
-use floem::reactive;
-use floem::view::Widget;
 use floem::views::{container, label, Decorators};
+use floem::{reactive, View};
 
 use crate::state::ApplicationStateShared;
 use crate::styles::variables::*;
@@ -28,7 +27,7 @@ pub struct Title;
 
 impl Title
 {
-	pub fn render(&self) -> impl Widget
+	pub fn render(&self) -> impl View
 	{
 		let state: ApplicationStateShared = reactive::use_context() /* dfplz */
 			.expect("État de l'application");

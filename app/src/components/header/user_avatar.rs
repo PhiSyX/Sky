@@ -9,8 +9,8 @@
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 use floem::peniko::Color;
-use floem::view::View;
 use floem::views::{container, img, Decorators};
+use floem::View;
 
 use crate::styles::variables::*;
 

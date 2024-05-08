@@ -22,7 +22,7 @@ macro_rules! make_svg_icon {
 		)*
 	) => { $(paste::paste! {
 		$(#[$doc])*
-		$vis fn [ < $constant:lower _icon > ] () -> impl floem::view::View
+		$vis fn [ < $constant:lower _icon > ] () -> impl floem::View
 		{
 			use floem::views::{Decorators, svg};
 			const $constant: &str = include_str!(concat!("../../../", $svg));
