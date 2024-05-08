@@ -65,7 +65,7 @@ impl URLBar
 			search_icon().class(IconWithOpacity),
 			text_input(url_s)
 				.placeholder("Entrer une URL...")
-				.on_key_up(
+				.on_key_down(
 					keyboard::Key::Named(keyboard::NamedKey::Enter),
 					keyboard::Modifiers::empty(),
 					open_url_handler,

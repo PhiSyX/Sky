@@ -11,11 +11,10 @@
 use std::process::Termination;
 
 use floem::peniko::Color;
-use floem::view::View;
 use floem::views::{h_stack, v_stack, Decorators};
 use floem::window::{WindowConfig, WindowId};
-use floem::{keyboard, reactive, style, window};
-use sky_ui::{ApplicationSettings, ThemeSettings};
+use floem::{keyboard, reactive, style, window, View};
+use sky_ui::ApplicationSettings;
 
 use crate::components::header::area::HeaderArea;
 use crate::components::icons::*;
@@ -87,18 +86,18 @@ impl Application
 			let view_id = view.id();
 			view
 				// NOTE: inspection
-				.on_key_up(
+				.on_key_down(
 					keyboard::Key::Named(keyboard::NamedKey::F11),
 					keyboard::Modifiers::empty(),
 					move |_| view_id.inspect(),
 				)
 				// NOTE: fermeture
-				.on_key_up(
+				.on_key_down(
 					keyboard::Key::Named(keyboard::NamedKey::Escape),
 					keyboard::Modifiers::empty(),
 					move |_| window::close_window(window_id),
 				)
-				.on_key_up(
+				.on_key_down(
 					keyboard::Key::Character("c".into()),
 					keyboard::Modifiers::CONTROL,
 					move |_| window::close_window(window_id),
