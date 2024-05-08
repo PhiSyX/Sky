@@ -8,8 +8,25 @@
 -   **info(sky)**: notre parser HTML n'est pas encore utilisable, on utilise
     pour l'instant `html5ever`.
 
+-   **praise(floem)**: simple d'utilisation, API claire, utilisation des signaux
+    pour le côté réactif.
+
 -   **praise(floem)**: nous pouvons étendre les classes déjà existantes, bon
     point.
+
+-   **issue(floem)**: n'est pour l'instant pas possible d'`prepend`/`append` des
+    éléments sur un container d'élément.
+
+Exemple:
+```rs
+let contents = make_contents(); // type: Iterator<Item = T> / Vec<T> / ...
+let footer = make_footer(); // impl View / AnyView / Container / ...
+
+let stack = v_stack(( header, subheader ))
+	.append_iter( contents )
+	.append( footer )
+;
+```
 
 -   **issue(floem)**: n'est pour l'instant pas possible d'utiliser de
     l'asynchrone.
