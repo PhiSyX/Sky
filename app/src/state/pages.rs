@@ -15,7 +15,7 @@ use std::path;
 use floem::cosmic_text::Style;
 use floem::peniko::Color;
 use floem::reactive::{create_rw_signal, RwSignal};
-use floem::view::View;
+use floem::view::{AnyView, View};
 use floem::views::{stack_from_iter, text, Decorators, Stack};
 use floem::widgets::button;
 use reqwest::StatusCode;
@@ -36,7 +36,7 @@ pub struct PageView
 {
 	pub raw_content: String,
 	pub new_title: String,
-	pub dyn_content: Stack,
+	pub dyn_content: Option<Stack>,
 }
 
 // ----------- //
@@ -192,100 +192,42 @@ impl Page
 		let mut temp_page_view = PageView {
 			raw_content: Default::default(),
 			new_title: Default::default(),
-			dyn_content: stack_from_iter([text(0)]),
+			dyn_content: Default::default(),
 		};
 
 		let mut make_element =
-			|el_name: &str, attrs: &[Attribute], maybe_text: Option<String>| {
+			|el_name: &str, attrs: &[Attribute], maybe_text: Option<&str>| {
 				match el_name {
 					| "title" => {
-						let t = maybe_text.unwrap_or_default();
-						temp_page_view.new_title = t.trim().to_string();
-						text("").any()
+						if let Some(t) = maybe_text {
+							temp_page_view.new_title = t.trim().to_string();
+						}
+						None
 					}
 
 					| "button" => {
-						let t = maybe_text.unwrap_or_default();
-						button(move || t.trim().to_owned()).any()
+						Self::make_button_element(
+							maybe_text.map(|s| s.to_string()),
+						)
 					}
 
-					| "h1" => {
-						let t = maybe_text.unwrap_or_default();
-						text(t.trim())
-							.style(|style| style.font_size(34.0))
-							.any()
-					}
-					| "h2" => {
-						let t = maybe_text.unwrap_or_default();
-						text(t.trim())
-							.style(|style| style.font_size(30.0))
-							.any()
-					}
-					| "h3" => {
-						let t = maybe_text.unwrap_or_default();
-						text(t.trim())
-							.style(|style| style.font_size(26.0))
-							.any()
-					}
-					| "h4" => {
-						let t = maybe_text.unwrap_or_default();
-						text(t.trim())
-							.style(|style| style.font_size(22.0))
-							.any()
-					}
-					| "h5" => {
-						let t = maybe_text.unwrap_or_default();
-						text(t.trim())
-							.style(|style| style.font_size(20.0))
-							.any()
-					}
-					| "h6" => {
-						let t = maybe_text.unwrap_or_default();
-						text(t.trim())
-							.style(|style| style.font_size(18.0))
-							.any()
-					}
+					| "h1" => Self::make_heading(maybe_text, 34.0),
+					| "h2" => Self::make_heading(maybe_text, 30.0),
+					| "h3" => Self::make_heading(maybe_text, 26.0),
+					| "h4" => Self::make_heading(maybe_text, 22.0),
+					| "h5" => Self::make_heading(maybe_text, 20.0),
+					| "h6" => Self::make_heading(maybe_text, 18.0),
 
-					| "strong" | "b" => {
-						let t = maybe_text.unwrap_or_default();
-						text(t.trim()).style(|style| style.font_bold()).any()
-					}
+					| "strong" | "b" => Self::make_bold_element(maybe_text),
+					| "em" | "i" => Self::make_italic_element(maybe_text),
 
-					| "em" | "i" => {
-						let t = maybe_text.unwrap_or_default();
-						text(t.trim())
-							.style(|style| {
-								style.font_style(
-									floem::cosmic_text::Style::Italic,
-								)
-							})
-							.any()
-					}
-
-					| "a" => {
-						let t = maybe_text.unwrap_or_default();
-						let href = attrs.iter().find_map(|attr| {
-							attr.name
-								.local
-								.eq("href")
-								.then_some(attr.value.to_string())
-						});
-
-						text(t.trim())
-							.style(|style| style.color(Color::STEEL_BLUE))
-							.on_click_cont(move |_| {
-								if let Some(url) = href.as_ref() {
-									println!("Clique sur le lien: {url}");
-								}
-							})
-							.any()
-					}
+					| "a" => Self::make_anchor_element(maybe_text, attrs),
 
 					| name => {
 						if let Some(t) = maybe_text {
 							let t = t.trim();
 							if !t.is_empty() {
-								return text(t).any();
+								return Some(text(t).any());
 							}
 						}
 
@@ -293,18 +235,20 @@ impl Page
 
 						println!("WARN: {} / {attrs:?}", &warning);
 
-						text(warning)
-							.style(|style| {
-								style
-									.padding(4)
-									.background(Color::DARK_RED)
-									.color(Color::WHITE)
-									.border(1)
-									.border_radius(2.0)
-									.border_color(Color::RED)
-									.font_style(Style::Italic)
-							})
-							.any()
+						Some(
+							text(warning)
+								.style(|style| {
+									style
+										.padding(4)
+										.background(Color::DARK_RED)
+										.color(Color::WHITE)
+										.border(1)
+										.border_radius(2.0)
+										.border_color(Color::RED)
+										.font_style(Style::Italic)
+								})
+								.any(),
+						)
 					}
 				}
 			};
@@ -324,20 +268,82 @@ impl Page
 				// Traiter le parent?
 				//let parent = tree.get(&parent_id).unwrap();
 
-				let floem_element = make_element(
+				let maybe_floem_element = make_element(
 					&element_name,
 					&element.attributes,
-					element.text.as_ref().map(|t| t.to_string()),
+					element.text.as_ref().map(|t| t.as_ref()),
 				);
 
-				list.push(floem_element);
+				if let Some(floem_element) = maybe_floem_element {
+					list.push(floem_element);
+				}
 			} else {
 				dbg!(&element);
 			}
 		}
 
-		temp_page_view.dyn_content =
-			stack_from_iter(list).style(|style| style.flex_col());
+		temp_page_view
+			.dyn_content
+			.replace(stack_from_iter(list).style(|style| style.flex_col()));
+
 		Ok(temp_page_view)
+	}
+
+	// FIXME: le clique fonctionne, mais ne change pas de page.
+	// Mettre en place, un système de d'échange de message (Actor Pattern?).
+	fn make_anchor_element(
+		maybe_text: Option<&str>,
+		attrs: &[Attribute],
+	) -> Option<AnyView>
+	{
+		maybe_text.filter(|s| !s.trim().is_empty()).map(move |s| {
+			let href = attrs.iter().find_map(|attr| {
+				attr.name.local.eq("href").then_some(attr.value.to_string())
+			});
+
+			let mut element =
+				text(s.trim()).style(|style| style.color(Color::STEEL_BLUE));
+
+			if let Some(url) = href {
+				element = element.on_click_cont(move |_| {
+					println!("Clique sur le lien: {url}");
+				});
+			}
+
+			element.any()
+		})
+	}
+
+	fn make_bold_element(maybe_text: Option<&str>) -> Option<AnyView>
+	{
+		maybe_text
+			.filter(|s| !s.trim().is_empty())
+			.map(move |s| text(s.trim()).style(|style| style.font_bold()).any())
+	}
+
+	fn make_button_element(maybe_text: Option<String>) -> Option<AnyView>
+	{
+		maybe_text
+			.filter(|s| !s.trim().is_empty())
+			.map(move |s| button(move || s.trim().to_owned()).any())
+	}
+
+	fn make_italic_element(maybe_text: Option<&str>) -> Option<AnyView>
+	{
+		maybe_text.filter(|s| !s.trim().is_empty()).map(move |s| {
+			text(s.trim())
+				.style(|style| style.font_style(Style::Italic))
+				.any()
+		})
+	}
+
+	fn make_heading(maybe_text: Option<&str>, font_size: f32)
+		-> Option<AnyView>
+	{
+		maybe_text.filter(|s| !s.trim().is_empty()).map(move |s| {
+			text(s.trim())
+				.style(move |style| style.font_size(font_size))
+				.any()
+		})
 	}
 }

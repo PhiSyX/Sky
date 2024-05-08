@@ -12,7 +12,15 @@ use floem::cosmic_text::Style;
 use floem::reactive;
 use floem::style::TextOverflow;
 use floem::view::{AnyView, View};
-use floem::views::{dyn_container, h_stack, scroll, text, v_stack, Decorators};
+use floem::views::{
+	dyn_container,
+	h_stack,
+	scroll,
+	stack,
+	text,
+	v_stack,
+	Decorators,
+};
 
 use crate::state::{ApplicationStateShared, Page};
 use crate::styles::classes::align::gap::*;
@@ -37,6 +45,9 @@ impl ContentArea
 			| Ok(page_view) => {
 				state.title_data.set_title(page_view.new_title);
 
+				let dyn_content =
+					page_view.dyn_content.unwrap_or(stack(text("")));
+
 				if cfg!(debug_assertions) {
 					let left_content = scroll(
 						v_stack((
@@ -48,7 +59,7 @@ impl ContentArea
 								}),
 							// NOTE: Ici qu'est injecté le contenu
 							// dynamiquement
-							page_view.dyn_content.style(|style| {
+							dyn_content.style(|style| {
 								style.text_overflow(TextOverflow::Clip)
 							}),
 						))
@@ -84,7 +95,7 @@ impl ContentArea
 						v_stack((
 							// NOTE: Ici qu'est injecté le contenu
 							// dynamiquement
-							page_view.dyn_content.style(|style| {
+							dyn_content.style(|style| {
 								style.text_overflow(TextOverflow::Clip)
 							}),
 						))
