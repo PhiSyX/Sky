@@ -31,55 +31,74 @@ pub struct ContentArea;
 
 impl ContentArea
 {
-	pub fn current_page(
-		state: ApplicationStateShared,
-		page: Page,
-	) -> AnyView
+	pub fn current_page(state: ApplicationStateShared, page: Page) -> AnyView
 	{
 		match page.render() {
 			| Ok(page_view) => {
 				state.title_data.set_title(page_view.new_title);
 
-				let left_content = scroll(
-					v_stack((
-						text("Prévisualisation du rendu") // don't format please
-							.style(|style| {
-								style
-									.color(COLOR_GREY500)
-									.font_style(Style::Italic)
-							}),
-						// NOTE: Ici qu'est injecté le contenu dynamiquement
-						page_view.dyn_content.style(|style| {
-							style.text_overflow(TextOverflow::Clip)
-						}),
-					))
-					.class(Gap16)
-					.style(|style| style.text_overflow(TextOverflow::Clip)),
-				)
-				.style(|style| style.size_pct(50.0, 100.0));
-
-				let right_content = scroll(
-					v_stack((
-						text("HTML (raw)") // don't format please
-							.style(|style| {
-								style
-									.color(COLOR_GREY500)
-									.font_style(Style::Italic)
-							}),
-						text(page_view.raw_content) // don't format please
-							.style(|style| {
+				if cfg!(debug_assertions) {
+					let left_content = scroll(
+						v_stack((
+							text("Prévisualisation du rendu") // don't format please
+								.style(|style| {
+									style
+										.color(COLOR_GREY500)
+										.font_style(Style::Italic)
+								}),
+							// NOTE: Ici qu'est injecté le contenu
+							// dynamiquement
+							page_view.dyn_content.style(|style| {
 								style.text_overflow(TextOverflow::Clip)
 							}),
-					))
-					.class(Gap16)
-					.style(|style| style.text_overflow(TextOverflow::Clip)),
-				)
-				.style(|style| style.size_pct(50.0, 100.0));
+						))
+						.class(Gap16)
+						.style(|style| style.text_overflow(TextOverflow::Clip)),
+					)
+					.style(|style| style.size_pct(50.0, 100.0));
 
-				h_stack((
-					left_content, // don't format please
-					right_content,
-				))
+					let right_content = scroll(
+						v_stack((
+							text("HTML (raw)") // don't format please
+								.style(|style| {
+									style
+										.color(COLOR_GREY500)
+										.font_style(Style::Italic)
+								}),
+							text(page_view.raw_content) // don't format please
+								.style(|style| {
+									style.text_overflow(TextOverflow::Clip)
+								}),
+						))
+						.class(Gap16)
+						.style(|style| style.text_overflow(TextOverflow::Clip)),
+					)
+					.style(|style| style.size_pct(50.0, 100.0));
+
+					h_stack((
+						left_content, // don't format please
+						right_content,
+					))
+				} else {
+					let left_content = scroll(
+						v_stack((
+							// NOTE: Ici qu'est injecté le contenu
+							// dynamiquement
+							page_view.dyn_content.style(|style| {
+								style.text_overflow(TextOverflow::Clip)
+							}),
+						))
+						.class(Gap16)
+						.style(|style| style.text_overflow(TextOverflow::Clip)),
+					)
+					.style(|style| {
+						style.size_full().text_overflow(TextOverflow::Clip)
+					});
+
+					h_stack((
+						left_content, // don't format please
+					))
+				}
 				.class(Gap8)
 				.style(|style| style.size_full())
 				.any()
@@ -92,7 +111,6 @@ impl ContentArea
 		}
 	}
 
-	// TODO: à améliorer
 	pub fn render(&self) -> impl View
 	{
 		let state: ApplicationStateShared = reactive::use_context() /* dfplz */

@@ -65,6 +65,22 @@ impl HTMLDocument
 		Ok(this)
 	}
 
+	pub fn from_slice(
+		slice: &mut &[u8],
+	) -> Result<Self, HTMLParserError>
+	{
+		let this = Self {
+			next_id: 1,
+			elements: BTreeMap::new(),
+		};
+
+		let this = html5ever::parse_document(this, Default::default())
+			.from_utf8()
+			.read_from(slice)?;
+
+		Ok(this)
+	}
+
 	pub fn from_stream(
 		stream: &mut impl std::io::Read,
 	) -> Result<Self, HTMLParserError>

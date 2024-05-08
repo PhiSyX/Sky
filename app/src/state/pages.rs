@@ -9,6 +9,7 @@
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 use std::collections::BTreeMap;
+use std::io::Read;
 use std::path;
 
 use floem::cosmic_text::Style;
@@ -19,8 +20,6 @@ use floem::views::{stack_from_iter, text, Decorators, Stack};
 use floem::widgets::button;
 use reqwest::StatusCode;
 use sky_html::{Attribute, HTMLDocument, HTMLElement};
-
-use crate::styles::colors::*;
 
 // --------- //
 // Structure //
@@ -68,7 +67,7 @@ pub enum PageError
 	#[error("Impossible d'analyser l'HTML: {0}")]
 	ParseHTML(#[from] sky_html::HTMLParserError),
 	#[error("Impossible de convertir en UTF-8: {0}")]
-	Utf8(#[from] std::string::FromUtf8Error),
+	Utf8(#[from] std::str::Utf8Error),
 }
 
 // -------------- //
@@ -97,8 +96,6 @@ impl Page
 		}
 	}
 
-	// FIXME: trouver un moyen de copier le buffer d'origine pour des fins de
-	// debug, afficher le contenu brut dans l'application.
 	pub fn open_file(
 		&self,
 		filepath: impl AsRef<path::Path>,
@@ -117,30 +114,53 @@ impl Page
 			)));
 		}
 
-		// NOTE: voir la note FIXME ci-haut.
-		let content = std::fs::read_to_string(filepath.as_ref())?;
+		let page_view = if cfg!(debug_assertions) {
+			let mut file = std::fs::File::open(filepath)?;
 
-		let doc = HTMLDocument::from_file(filepath)?;
-		let mut page_view = self.build_page_view(&doc.elements)?;
+			let mut buf = Vec::new();
+			file.read_to_end(&mut buf)?;
+			let raw_content = std::str::from_utf8(&buf)?;
 
-		page_view.raw_content = content;
+			let doc = HTMLDocument::from_slice(&mut buf.as_slice())?;
+			let mut page_view = self.build_page_view(&doc.elements)?;
+			page_view.raw_content = raw_content.to_string();
+			page_view
+		} else {
+			let doc = HTMLDocument::from_file(filepath)?;
+			self.build_page_view(&doc.elements)?
+		};
 
 		Ok(page_view)
 	}
 
-	// FIXME: trouver un moyen de copier le buffer d'origine pour des fins de
-	// debug, afficher le contenu brut dans l'application.
 	pub fn fetch(&self, url: impl ToString) -> Result<PageView, PageError>
 	{
 		reqwest::blocking::get(url.to_string())
 			.map_err(PageError::Req)
 			.and_then(|mut response| {
 				if response.status().is_success() {
-					let doc = HTMLDocument::from_stream(&mut response)?;
-					let mut page_view = self.build_page_view(&doc.elements)?;
+					let page_view = if cfg!(debug_assertions) {
+						let mut buf = Vec::new();
 
-					// NOTE: voir la note FIXME ci-haut.
-					page_view.raw_content = String::from("TODO");
+						// NOTE: le fait de lire la réponse d'une seule traite
+						// fait que le système devient un peu plus lent sur des
+						// gros jeux de données. Cela va de soi.
+						response.read_to_end(&mut buf)?;
+
+						let raw_content = std::str::from_utf8(&buf)?;
+
+						let doc =
+							HTMLDocument::from_slice(&mut buf.as_slice())?;
+
+						let mut page_view =
+							self.build_page_view(&doc.elements)?;
+
+						page_view.raw_content = raw_content.to_string();
+						page_view
+					} else {
+						let doc = HTMLDocument::from_stream(&mut response)?;
+						self.build_page_view(&doc.elements)?
+					};
 
 					return Ok(page_view);
 				}
@@ -219,7 +239,7 @@ impl Page
 							.any()
 					}
 
-					| "p" => {
+					| "span" | "p" => {
 						let t = maybe_text.unwrap_or_default();
 						text(t.trim()).any()
 					}

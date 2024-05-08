@@ -1,7 +1,7 @@
 # Mini navigateur
 
 Work In Progress, il s'agit d'un projet expérimental.
-Tout n'est pas fonctionnel.
+Tout n'est pas fonctionnel. Tout n'est pas propre.
 
 Calme-toi! L'idée n'est pas de concurrencer Firefox, Chrome, Brave, Edge, Arc,
 etc.
@@ -13,6 +13,10 @@ Capture d'écran actuel de l'app:
 ![UI](docs/screenshots/ui-current.png?v0.1.0)
 
 ## Notes
+
+-   **known-issue**: lenteur en mode debug sur des gros jeux de données. Cela
+	est dû au fait que nous lisons d'une traite le buffer pour afficher le
+	contenu en brut dans l'application. C'est volontaire, pour le moment.
 
 -   **info(sky)**: les commentaires `// dfplz`, `// don't format please` et
     autre variantes sont uniquement présents pour que le formater de rust
@@ -32,6 +36,7 @@ Capture d'écran actuel de l'app:
     éléments sur un container d'élément.
 
 Exemple:
+
 ```rs
 let contents = make_contents(); // type: Iterator<Item = T> / Vec<T> / ...
 let footer = make_footer(); // impl View / AnyView / Container / ...
@@ -94,6 +99,7 @@ parent_view.style(|s| {
 svg_element.class(IconWithOpacity);
 ```
 
--   **issue(std / stream)**: pas trouver le moyen de cloner un stream, buffer,
-    d'un fichier ou d'une réponse de requête, pour éventuellement afficher la
-    partie brut HTML côté frontend
+-   **issue(std / stream)**: pas trouver le moyen de copier un
+    stream/buffer, d'un fichier ou d'une réponse de requête de manière
+    efficiente, pour éventuellement afficher la partie brut HTML côté
+    frontend en debug.
