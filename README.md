@@ -1,4 +1,18 @@
-# Notes
+# Mini navigateur
+
+Work In Progress, il s'agit d'un projet expérimental.
+Tout n'est pas fonctionnel.
+
+Calme-toi! L'idée n'est pas de concurrencer Firefox, Chrome, Brave, Edge, Arc,
+etc.
+
+## UI
+
+Capture d'écran actuel de l'app:
+
+![UI](docs/screenshots/ui-current.png?v0.1.0)
+
+## Notes
 
 -   **info(sky)**: les commentaires `// dfplz`, `// don't format please` et
     autre variantes sont uniquement présents pour que le formater de rust
