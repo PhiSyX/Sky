@@ -30,7 +30,7 @@ impl NavigationArea
 	pub fn render(&self) -> impl View
 	{
 		v_stack((
-			home_icon().class(IconWithOpacity), // -- don't format please
+			home_icon().class(IconWithOpacity), // don't format please
 		))
 		.class(Gap24)
 		.style(|style| {

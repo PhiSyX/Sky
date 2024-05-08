@@ -9,7 +9,6 @@
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 use std::collections::BTreeMap;
-use std::io::{BufWriter, Read};
 use std::path;
 
 use floem::peniko::Color;
@@ -29,7 +28,7 @@ use crate::styles::colors::*;
 pub struct PagesData
 {
 	pub current_page: RwSignal<Page>,
-	pub pages: Vec<Page>,
+	// pub pages: Vec<Page>,
 	// pages: (ReadSignal<String>, WriteSignal<String>),
 }
 
@@ -71,7 +70,7 @@ impl PagesData
 		let blank_path = path::Path::new("./pages/blank.html");
 		Self {
 			current_page: create_rw_signal(Page::File(blank_path.to_owned())),
-			pages: Default::default(),
+			// pages: Default::default(),
 		}
 	}
 }
@@ -81,38 +80,34 @@ impl Page
 	pub fn render(&self) -> Result<(String, Stack), PageError>
 	{
 		match self {
-			| Page::File(page_path) => {
-				// TODO: autoriser plusieurs extensions.
-				if page_path.extension().filter(|ext| *ext == "html").is_none()
-				{
-					return Err(PageError::Fs(std::io::Error::new(
-						std::io::ErrorKind::InvalidData,
-						"n'est pas un fichier HTML",
-					)));
-				}
-
-				let content = std::fs::read_to_string(page_path)?;
-
-				let doc = HTMLDocument::from_file(page_path)?;
-				let els = self.build_stack(&doc.elements);
-				Ok((content, els))
-			}
-			| Page::Url(url) => {
-				Ok(reqwest::blocking::get(url.as_ref())
-					.map_err(PageError::Req)
-					.and_then(|mut response| {
-						if response.status().is_success() {
-							let doc = HTMLDocument::from_stream(&mut response)?;
-							let els = self.build_stack(&doc.elements);
-							return Ok((String::from("TODO"), els));
-						}
-
-						Err(PageError::InvalidReq {
-							status: response.status(),
-						})
-					})?)
-			}
+			| Page::File(page_path) => self.open_file(page_path),
+			| Page::Url(url) => self.fetch(url),
 		}
+	}
+
+	pub fn open_file(
+		&self,
+		filepath: impl AsRef<path::Path>,
+	) -> Result<(String, Stack), PageError>
+	{
+		// TODO: autoriser plusieurs extensions.
+		if filepath
+			.as_ref()
+			.extension()
+			.filter(|ext| *ext == "html")
+			.is_none()
+		{
+			return Err(PageError::Fs(std::io::Error::new(
+				std::io::ErrorKind::InvalidData,
+				"n'est pas un fichier HTML",
+			)));
+		}
+
+		let content = std::fs::read_to_string(filepath.as_ref())?;
+
+		let doc = HTMLDocument::from_file(filepath)?;
+		let els = self.build_stack(&doc.elements)?;
+		Ok((content, els))
 	}
 
 	pub fn fetch(
@@ -120,25 +115,28 @@ impl Page
 		url: impl ToString,
 	) -> Result<(String, Stack), PageError>
 	{
-		Ok(reqwest::blocking::get(url.to_string())
+		reqwest::blocking::get(url.to_string())
 			.map_err(PageError::Req)
 			.and_then(|mut response| {
 				if response.status().is_success() {
 					let doc = HTMLDocument::from_stream(&mut response)?;
-					let els = self.build_stack(&doc.elements);
+					let els = self.build_stack(&doc.elements)?;
 					return Ok((String::from("TODO"), els));
 				}
 
 				Err(PageError::InvalidReq {
 					status: response.status(),
 				})
-			})?)
+			})
 	}
 }
 
 impl Page
 {
-	fn build_stack(&self, tree: &BTreeMap<usize, HTMLElement>) -> Stack
+	fn build_stack(
+		&self,
+		tree: &BTreeMap<usize, HTMLElement>,
+	) -> Result<Stack, PageError>
 	{
 		let make_element = |el_name: &str,
 		                    attr: &[Attribute],
@@ -251,6 +249,6 @@ impl Page
 			}
 		}
 
-		stack_from_iter(list).style(|style| style.flex_col())
+		Ok(stack_from_iter(list).style(|style| style.flex_col()))
 	}
 }

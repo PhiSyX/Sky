@@ -8,9 +8,9 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::reactive::use_context;
-use floem::style::{AlignSelf, FontStyle, TextOverflow};
-use floem::taffy::AlignItems;
+use floem::cosmic_text::Style;
+use floem::reactive;
+use floem::style::TextOverflow;
 use floem::view::{AnyView, View};
 use floem::views::{dyn_container, h_stack, scroll, text, v_stack, Decorators};
 
@@ -37,11 +37,13 @@ impl ContentArea
 			| Ok((content, stack)) => {
 				let left_content = scroll(
 					v_stack((
-						text("Prévisualisation du rendu").style(|style| {
-							style
-								.color(COLOR_GREY500)
-								.font_style(floem::cosmic_text::Style::Italic)
-						}),
+						text("Prévisualisation du rendu") // don't format please
+							.style(|style| {
+								style
+									.color(COLOR_GREY500)
+									.font_style(Style::Italic)
+							}),
+						// NOTE: Ici qu'est injecté le contenu dynamiquement
 						stack.style(|style| {
 							style.text_overflow(TextOverflow::Clip)
 						}),
@@ -53,24 +55,29 @@ impl ContentArea
 
 				let right_content = scroll(
 					v_stack((
-						text("HTML Brut").style(|style| {
-							style
-								.color(COLOR_GREY500)
-								.font_style(floem::cosmic_text::Style::Italic)
-						}),
-						text(content).style(|style| {
-							style.text_overflow(TextOverflow::Clip)
-						}),
+						text("HTML (raw)") // don't format please
+							.style(|style| {
+								style
+									.color(COLOR_GREY500)
+									.font_style(Style::Italic)
+							}),
+						text(content) // don't format please
+							.style(|style| {
+								style.text_overflow(TextOverflow::Clip)
+							}),
 					))
 					.class(Gap16)
 					.style(|style| style.text_overflow(TextOverflow::Clip)),
 				)
 				.style(|style| style.size_pct(50.0, 100.0));
 
-				h_stack((left_content, right_content))
-					.class(Gap8)
-					.style(|style| style.size_full())
-					.any()
+				h_stack((
+					left_content, // don't format please
+					right_content,
+				))
+				.class(Gap8)
+				.style(|style| style.size_full())
+				.any()
 			}
 			| Err(err) => {
 				text(err.to_string())
@@ -82,15 +89,16 @@ impl ContentArea
 
 	pub fn render(&self) -> impl View
 	{
-		let state: ApplicationStateShared =
-			use_context().expect("État de l'application");
+		let state: ApplicationStateShared = reactive::use_context() /* dfplz */
+			.expect("État de l'application");
 
-		let state_ref = ApplicationStateShared::clone(&state);
+		let state_r = ApplicationStateShared::clone(&state);
 
 		dyn_container(
-			move || state_ref.pages_data.current_page.get(),
+			move || state_r.pages_data.current_page.get(),
 			Self::current_page,
 		)
+		.style(|style| style.padding(space(2)).flex_grow(1.0).size_full())
 		.style(move |style| {
 			style
 				.apply_if(state.theme_data.is_current_dark(), |s| {
@@ -99,9 +107,6 @@ impl ContentArea
 				.apply_if(state.theme_data.is_current_light(), |s| {
 					s.background(MAIN_AREA_LIGHT_MODE)
 				})
-				.padding(space(2))
-				.flex_grow(1.0)
-				.size_full()
 		})
 	}
 }

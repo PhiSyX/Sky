@@ -16,7 +16,7 @@ use super::controls::WindowControls;
 use super::title::Title;
 use super::url_bar::URLBar;
 use super::user_avatar::UserAvatar;
-use crate::styles::classes::align::gap::Gap16;
+use crate::styles::classes::align::gap::*;
 use crate::styles::variables::*;
 
 // --------- //
@@ -50,16 +50,23 @@ impl HeaderArea
 	pub fn render(&self) -> impl View
 	{
 		let avatar = self.user_avatar.render();
+
 		let search_url_bar = self.url_bar.render();
-		let window_title =
-			drag_window_area(self.title.render()).style(|style| {
+
+		let window_title = drag_window_area(self.title.render()) // dfplz
+			.style(|style| {
 				style.flex_grow(1.0).justify_center().items_center()
 			});
+
 		let window_controls = self.controls.render();
-		h_stack((avatar, search_url_bar, window_title, window_controls))
-			.class(Gap16)
-			.style(|style| {
-				style.width_full().height(space8(80)).padding(space(2))
-			})
+
+		h_stack((
+			avatar,
+			search_url_bar,
+			window_title,
+			window_controls, // don't format please
+		))
+		.class(Gap16)
+		.style(|style| style.width_full().height(space8(80)).padding(space(2)))
 	}
 }

@@ -38,8 +38,9 @@ impl MainArea
 	pub fn render(&self) -> impl View
 	{
 		let content_area = self.content.render();
+
 		h_stack((
-			content_area, // -- don't format please
+			content_area, // don't format please
 		))
 		.style(|style| style.flex_grow(1.0).size_full())
 	}

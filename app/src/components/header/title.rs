@@ -9,7 +9,7 @@
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 use floem::action::set_window_title;
-use floem::reactive::{self, use_context};
+use floem::reactive;
 use floem::view::Widget;
 use floem::views::{container, label, Decorators};
 
@@ -30,8 +30,8 @@ impl Title
 {
 	pub fn render(&self) -> impl Widget
 	{
-		let state: ApplicationStateShared =
-			use_context().expect("État de l'application");
+		let state: ApplicationStateShared = reactive::use_context() /* dfplz */
+			.expect("État de l'application");
 
 		let title = state.title_data.read();
 

@@ -9,11 +9,10 @@
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 use floem::event::Event;
-use floem::reactive::use_context;
 use floem::style::CursorStyle;
 use floem::view::View;
 use floem::views::{h_stack, Decorators};
-use floem::{action, window};
+use floem::{action, reactive, window};
 
 use crate::components::icons::*;
 use crate::state::ApplicationStateShared;
@@ -54,24 +53,29 @@ impl WindowControls
 
 	pub fn render(&self) -> impl View
 	{
-		let change_theme_handler = |_: &Event| {
-			let state = use_context::<ApplicationStateShared>()
-				.expect("État de l'application");
+		let state: ApplicationStateShared = reactive::use_context() /* dfplz */
+			.expect("État de l'application");
+
+		let change_theme_handler = move |_: &Event| {
 			state.theme_data.toggle();
 		};
 
+		let user_controls = h_stack((
+			notification_icon(),
+			theme_icon().class(Icon).on_click_cont(change_theme_handler),
+		))
+		.class(Gap8);
+
+		let sys_controls = h_stack((
+			self.minimize.render(),
+			self.maximize.render(),
+			self.close.render(),
+		))
+		.class(Gap8);
+
 		h_stack((
-			h_stack((
-				notification_icon(),
-				theme_icon().class(Icon).on_click_cont(change_theme_handler),
-			))
-			.class(Gap8),
-			h_stack((
-				self.minimize.render(),
-				self.maximize.render(),
-				self.close.render(),
-			))
-			.class(Gap8),
+			user_controls,
+			sys_controls, // don't format please
 		))
 		.style(|style| {
 			style
