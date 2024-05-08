@@ -139,7 +139,12 @@ impl Page
 			.map_err(PageError::Req)
 			.and_then(|mut response| {
 				if response.status().is_success() {
-					let page_view = if cfg!(debug_assertions) {
+					let doc = HTMLDocument::from_stream(&mut response)?;
+					let mut page_view = self.build_page_view(&doc.elements)?;
+					page_view.raw_content = String::from("TODO");
+
+					/* NOTE: TROP LENT en debug.
+					let page_view =if cfg!(debug_assertions) {
 						let mut buf = Vec::new();
 
 						// NOTE: le fait de lire la réponse d'une seule traite
@@ -157,10 +162,12 @@ impl Page
 
 						page_view.raw_content = raw_content.to_string();
 						page_view
-					} else {
+					}
+					else {
 						let doc = HTMLDocument::from_stream(&mut response)?;
 						self.build_page_view(&doc.elements)?
 					};
+					*/
 
 					return Ok(page_view);
 				}
@@ -193,7 +200,7 @@ impl Page
 				match el_name {
 					| "title" => {
 						let t = maybe_text.unwrap_or_default();
-						temp_page_view.new_title = t;
+						temp_page_view.new_title = t.trim().to_string();
 						text("").any()
 					}
 
@@ -239,11 +246,6 @@ impl Page
 							.any()
 					}
 
-					| "span" | "p" => {
-						let t = maybe_text.unwrap_or_default();
-						text(t.trim()).any()
-					}
-
 					| "strong" | "b" => {
 						let t = maybe_text.unwrap_or_default();
 						text(t.trim()).style(|style| style.font_bold()).any()
@@ -280,6 +282,13 @@ impl Page
 					}
 
 					| name => {
+						if let Some(t) = maybe_text {
+							let t = t.trim();
+							if !t.is_empty() {
+								return text(t).any();
+							}
+						}
+
 						let warning = format!("Élément « {name} » non rendu");
 
 						println!("WARN: {} / {attrs:?}", &warning);
