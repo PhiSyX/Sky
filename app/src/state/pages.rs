@@ -97,6 +97,8 @@ impl Page
 		}
 	}
 
+	// FIXME: trouver un moyen de copier le buffer d'origine pour des fins de
+	// debug, afficher le contenu brut dans l'application.
 	pub fn open_file(
 		&self,
 		filepath: impl AsRef<path::Path>,
@@ -115,16 +117,19 @@ impl Page
 			)));
 		}
 
+		// NOTE: voir la note FIXME ci-haut.
 		let content = std::fs::read_to_string(filepath.as_ref())?;
 
 		let doc = HTMLDocument::from_file(filepath)?;
-
 		let mut page_view = self.build_page_view(&doc.elements)?;
+
 		page_view.raw_content = content;
 
 		Ok(page_view)
 	}
 
+	// FIXME: trouver un moyen de copier le buffer d'origine pour des fins de
+	// debug, afficher le contenu brut dans l'application.
 	pub fn fetch(&self, url: impl ToString) -> Result<PageView, PageError>
 	{
 		reqwest::blocking::get(url.to_string())
@@ -133,7 +138,10 @@ impl Page
 				if response.status().is_success() {
 					let doc = HTMLDocument::from_stream(&mut response)?;
 					let mut page_view = self.build_page_view(&doc.elements)?;
+
+					// NOTE: voir la note FIXME ci-haut.
 					page_view.raw_content = String::from("TODO");
+
 					return Ok(page_view);
 				}
 
