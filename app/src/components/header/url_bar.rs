@@ -8,10 +8,9 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::view::View;
-use floem::views::{h_stack, text_input, Decorators};
-use floem::widgets::PlaceholderTextClass;
-use floem::{event, keyboard, reactive};
+use floem::peniko::Color;
+use floem::views::{h_stack, text_input, Decorators, PlaceholderTextClass};
+use floem::{event, keyboard, reactive, View};
 
 use crate::components::icons::*;
 use crate::state::{ApplicationStateShared, Page};
@@ -85,12 +84,38 @@ impl URLBar
 						style
 							.apply_if(
 								state_r.theme_data.is_current_dark(),
-								|s| s.color(COLOR_WHITE),
+								|s| {
+									s.background(Color::TRANSPARENT)
+										.color(COLOR_WHITE)
+								},
 							)
 							.apply_if(
 								state_r.theme_data.is_current_light(),
-								|s| s.color(COLOR_GREY700),
+								|s| {
+									s.background(Color::TRANSPARENT)
+										.color(COLOR_GREY700)
+								},
 							)
+							.border(0)
+							// WTF ??????
+							.active(|style| {
+								style.background(Color::TRANSPARENT)
+							})
+							.hover(|style| style.background(Color::TRANSPARENT))
+							.focus(|style| {
+								style.background(Color::TRANSPARENT).hover(
+									|style| {
+										style.background(Color::TRANSPARENT)
+									},
+								)
+							})
+							.selected(|style| {
+								style.background(Color::TRANSPARENT)
+							})
+							.focus_visible(|style| {
+								style.background(Color::TRANSPARENT)
+							})
+							.background(Color::TRANSPARENT)
 					}
 				}),
 		))

@@ -99,6 +99,25 @@ parent_view.style(|s| {
 svg_element.class(IconWithOpacity);
 ```
 
+-   **issue(floem)**: La propriété `Style#background` à la valeur
+    `Color::TRANSPARENT` n'est pas pris en compte pour tous état possible
+	hover, focus, etc... On se retrouve à faire des choses moche comme suit:
+
+```rs
+text_input(...).style(|s| {
+	s.active(|s| s.background(Color::TRANSPARENT))
+	.hover(|s| s.background(Color::TRANSPARENT))
+	.focus(|s| {
+		s
+			.background(Color::TRANSPARENT)
+			.hover(|s| s.background(Color::TRANSPARENT))
+	})
+	.selected(|s| s.background(Color::TRANSPARENT))
+	.focus_visible(|s| s.background(Color::TRANSPARENT))
+	.background(Color::TRANSPARENT)
+})
+```
+
 -   **issue(std / stream)**: pas trouver le moyen de copier un
     stream/buffer, d'un fichier ou d'une réponse de requête de manière
     efficiente, pour éventuellement afficher la partie brut HTML côté
