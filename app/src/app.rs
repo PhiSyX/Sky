@@ -76,7 +76,7 @@ impl Application
 	pub fn run(self) -> impl Termination
 	{
 		let window_settings = WindowConfig::default()
-			.size((1440.0, 800.0))
+			.size((1000.0, 500.0))
 			.title(self.settings.title())
 			// .apply_default_theme(false)
 			// .with_transparent(true)
