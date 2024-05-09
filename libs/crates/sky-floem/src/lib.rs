@@ -8,42 +8,13 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use sky_floem::action::set_window_title;
-use sky_floem::views::{container, label, Decorators};
-use sky_floem::{reactive, View};
+pub use floem::*;
 
-use crate::state::ApplicationStateShared;
-use crate::styles::variables::*;
-
-// --------- //
-// Structure //
-// --------- //
-
-pub struct Title;
-
-// -------------- //
-// Implémentation //
-// -------------- //
-
-impl Title
+mod extension
 {
-	pub fn render(&self) -> impl View
-	{
-		let state: ApplicationStateShared = reactive::use_context() /* dfplz */
-			.expect("État de l'application");
+	mod scrollable;
 
-		let title = state.title_data.read();
-
-		reactive::create_effect(move |_| {
-			set_window_title(title.get());
-		});
-
-		container(
-			label(move || title.get())
-				.style(|style| style.max_width(space8(310))),
-		)
-		.on_click_cont(move |_| {
-			state.title_data.write().set(title.get());
-		})
-	}
+	pub use self::scrollable::*;
 }
+
+pub use self::extension::*;

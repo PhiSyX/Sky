@@ -8,7 +8,7 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::reactive::{create_signal, ReadSignal, WriteSignal};
+use sky_floem::reactive::{create_signal, ReadSignal, WriteSignal};
 use sky_ui::ThemeSettings;
 
 // --------- //

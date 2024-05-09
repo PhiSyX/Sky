@@ -8,9 +8,9 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::views::{drag_window_area, h_stack, Decorators};
-use floem::window::WindowId;
-use floem::View;
+use sky_floem::views::{drag_window_area, h_stack, Decorators};
+use sky_floem::window::WindowId;
+use sky_floem::View;
 
 use super::controls::WindowControls;
 use super::title::Title;

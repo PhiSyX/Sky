@@ -8,42 +8,57 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use sky_floem::action::set_window_title;
-use sky_floem::views::{container, label, Decorators};
-use sky_floem::{reactive, View};
+//! Élément scrollable
+//!
+//! ```rs
+//! my_el
+//!   .scroll()
+//! ```
 
-use crate::state::ApplicationStateShared;
-use crate::styles::variables::*;
+use floem::style::TextOverflow;
+use floem::unit::PxPctAuto;
+use floem::views::{scroll, Decorators, Scroll};
+use floem::IntoView;
 
 // --------- //
-// Structure //
+// Interface //
 // --------- //
 
-pub struct Title;
-
-// -------------- //
-// Implémentation //
-// -------------- //
-
-impl Title
+pub trait ScrollableExt: IntoView
 {
-	pub fn render(&self) -> impl View
+	fn scroll(self) -> Scroll
 	{
-		let state: ApplicationStateShared = reactive::use_context() /* dfplz */
-			.expect("État de l'application");
+		scroll(self.style(|style| style.text_overflow(TextOverflow::Clip)))
+			.style(|style| style.text_overflow(TextOverflow::Clip))
+	}
 
-		let title = state.title_data.read();
+	fn scroll_full_size(self) -> Scroll
+	{
+		self.scroll().style(|style| style.size_full())
+	}
 
-		reactive::create_effect(move |_| {
-			set_window_title(title.get());
-		});
+	fn scroll_x(self) -> Scroll
+	{
+		self.scroll().style(|style| style.width_full())
+	}
 
-		container(
-			label(move || title.get())
-				.style(|style| style.max_width(space8(310))),
-		)
-		.on_click_cont(move |_| {
-			state.title_data.write().set(title.get());
-		})
+	fn scroll_y(self) -> Scroll
+	{
+		self.scroll().style(|style| style.height_full())
+	}
+
+	fn scroll_with_size(
+		self,
+		size: (impl Into<PxPctAuto>, impl Into<PxPctAuto>),
+	) -> Scroll
+	{
+		let (w, h) = (size.0.into(), size.1.into());
+		self.scroll().style(move |style| style.size(w, h))
 	}
 }
+
+// -------------- //
+// Implémentation // -> Interface
+// -------------- //
+
+impl<V: IntoView + 'static> ScrollableExt for V {}

@@ -10,10 +10,10 @@
 
 use std::process::Termination;
 
-use floem::peniko::Color;
-use floem::views::{h_stack, v_stack, Decorators};
-use floem::window::{WindowConfig, WindowId};
-use floem::{keyboard, reactive, style, window, View};
+use sky_floem::peniko::Color;
+use sky_floem::views::{h_stack, v_stack, Decorators};
+use sky_floem::window::{WindowConfig, WindowId};
+use sky_floem::{keyboard, reactive, style, window, View};
 use sky_ui::{ApplicationSettings, Size};
 
 use crate::components::header::area::HeaderArea;
@@ -110,7 +110,7 @@ impl Application
 				)
 		};
 
-		floem::Application::new()
+		sky_floem::Application::new()
 			.window(window_render, Some(window_settings))
 			.run()
 	}

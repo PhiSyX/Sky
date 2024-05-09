@@ -8,9 +8,9 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::peniko::Color;
-use floem::views::{h_stack, text_input, Decorators, PlaceholderTextClass};
-use floem::{event, keyboard, reactive, View};
+use sky_floem::peniko::Color;
+use sky_floem::views::{h_stack, text_input, Decorators, PlaceholderTextClass};
+use sky_floem::{event, keyboard, reactive, View};
 
 use crate::components::icons::*;
 use crate::state::{ApplicationStateShared, Page};

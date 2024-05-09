@@ -8,9 +8,9 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::peniko::Color;
-use floem::views::{container, img, Decorators};
-use floem::View;
+use sky_floem::peniko::Color;
+use sky_floem::views::{container, img, Decorators};
+use sky_floem::View;
 
 use crate::styles::variables::*;
 

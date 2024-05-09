@@ -8,7 +8,7 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::style_class;
+use sky_floem::style_class;
 
 // ----- //
 // MACRO //
@@ -22,9 +22,9 @@ macro_rules! make_svg_icon {
 		)*
 	) => { $(paste::paste! {
 		$(#[$doc])*
-		$vis fn [ < $constant:lower _icon > ] () -> impl floem::View
+		$vis fn [ < $constant:lower _icon > ] () -> impl sky_floem::View
 		{
-			use floem::views::{Decorators, svg};
+			use sky_floem::views::{Decorators, svg};
 			const $constant: &str = include_str!(concat!("../../../", $svg));
 			svg(|| $constant.to_owned())
 				.style(|style| style.size(24, 24))

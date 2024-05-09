@@ -8,10 +8,17 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::cosmic_text::Style;
-use floem::style::TextOverflow;
-use floem::views::{dyn_container, h_stack, scroll, text, v_stack, Decorators};
-use floem::{reactive, AnyView, IntoView, View};
+use sky_floem::cosmic_text::Style;
+use sky_floem::style::TextOverflow;
+use sky_floem::views::{
+	dyn_container,
+	h_stack,
+	scroll,
+	text,
+	v_stack,
+	Decorators,
+};
+use sky_floem::{reactive, AnyView, IntoView, ScrollableExt, View};
 
 use crate::state::{ApplicationStateShared, Page};
 use crate::styles::classes::align::gap::*;
@@ -41,41 +48,35 @@ impl ContentArea
 				};
 
 				if cfg!(debug_assertions) {
-					let left_content = scroll(
-						v_stack((
-							text("Prévisualisation du rendu") // don't format please
-								.style(|style| {
-									style
-										.color(COLOR_GREY500)
-										.font_style(Style::Italic)
-								}),
-							// NOTE: Ici qu'est injecté le contenu
-							// dynamiquement
-							dyn_content.style(|style| {
-								style.text_overflow(TextOverflow::Clip)
+					let left_content = v_stack((
+						text("Prévisualisation du rendu") // don't format please
+							.style(|style| {
+								style
+									.color(COLOR_GREY500)
+									.font_style(Style::Italic)
 							}),
-						))
-						.class(Gap16)
-						.style(|style| style.text_overflow(TextOverflow::Clip)),
-					)
+						// NOTE: Ici qu'est injecté le contenu dynamiquement
+						dyn_content
+							.scroll_x()
+							.style(|style| style.height_pct(95.0)),
+					))
+					.class(Gap16)
+					.style(|style| style.text_overflow(TextOverflow::Clip))
 					.style(|style| style.size_pct(50.0, 100.0));
 
-					let right_content = scroll(
-						v_stack((
-							text("HTML (raw)") // don't format please
-								.style(|style| {
-									style
-										.color(COLOR_GREY500)
-										.font_style(Style::Italic)
-								}),
-							text(page_view.raw_content) // don't format please
-								.style(|style| {
-									style.text_overflow(TextOverflow::Clip)
-								}),
-						))
-						.class(Gap16)
-						.style(|style| style.text_overflow(TextOverflow::Clip)),
-					)
+					let right_content = v_stack((
+						text("HTML (raw)") // don't format please
+							.style(|style| {
+								style
+									.color(COLOR_GREY500)
+									.font_style(Style::Italic)
+							}),
+						text(page_view.raw_content) // don't format please
+							.scroll_x()
+							.style(|style| style.height_pct(95.0)),
+					))
+					.class(Gap16)
+					.style(|style| style.text_overflow(TextOverflow::Clip))
 					.style(|style| style.size_pct(50.0, 100.0));
 
 					h_stack((
@@ -83,20 +84,8 @@ impl ContentArea
 						right_content,
 					))
 				} else {
-					let left_content = scroll(
-						v_stack((
-							// NOTE: Ici qu'est injecté le contenu
-							// dynamiquement
-							dyn_content.style(|style| {
-								style.text_overflow(TextOverflow::Clip)
-							}),
-						))
-						.class(Gap16)
-						.style(|style| style.text_overflow(TextOverflow::Clip)),
-					)
-					.style(|style| {
-						style.size_full().text_overflow(TextOverflow::Clip)
-					});
+					// NOTE: Ici qu'est injecté le contenu dynamiquement
+					let left_content = dyn_content.scroll_full_size();
 
 					h_stack((
 						left_content, // don't format please

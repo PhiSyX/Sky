@@ -8,8 +8,8 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::views::{v_stack, Decorators};
-use floem::View;
+use sky_floem::views::{v_stack, Decorators};
+use sky_floem::View;
 
 use crate::components::icons::*;
 use crate::styles::classes::align::gap::*;

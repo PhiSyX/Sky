@@ -8,10 +8,10 @@
 // ┃  file, You can obtain one at https://mozilla.org/MPL/2.0/.                ┃
 // ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-use floem::event::Event;
-use floem::style::CursorStyle;
-use floem::views::{h_stack, Decorators};
-use floem::{action, reactive, window, View};
+use sky_floem::event::Event;
+use sky_floem::style::CursorStyle;
+use sky_floem::views::{h_stack, Decorators};
+use sky_floem::{action, reactive, window, View};
 
 use crate::components::icons::*;
 use crate::state::ApplicationStateShared;
