@@ -36,6 +36,7 @@ pub struct PageView
 	pub raw_content: String,
 	pub new_title: String,
 	pub dyn_content: Option<Stack>,
+	pub debugging: bool,
 }
 
 // ----------- //
@@ -123,6 +124,7 @@ impl Page
 			let doc = HTMLDocument::from_slice(&mut buf.as_slice())?;
 			let mut page_view = self.build_page_view(&doc.elements)?;
 			page_view.raw_content = raw_content.to_string();
+			page_view.debugging = true;
 			page_view
 		} else {
 			let doc = HTMLDocument::from_file(filepath)?;
@@ -137,43 +139,35 @@ impl Page
 		reqwest::blocking::get(url.to_string())
 			.map_err(PageError::Req)
 			.and_then(|mut response| {
-				if response.status().is_success() {
+				let content_type =
+					response.headers().get("content-type").unwrap();
+				let content_type_str = content_type.to_str().unwrap();
+
+				let status = response.status();
+
+				if !status.is_success() {
+					return Err(PageError::InvalidReq { status });
+				}
+
+				if content_type_str.contains("text/html") {
 					let doc = HTMLDocument::from_stream(&mut response)?;
-					let mut page_view = self.build_page_view(&doc.elements)?;
-					page_view.raw_content = String::from("TODO");
-
-					/* NOTE: TROP LENT en debug.
-					let page_view =if cfg!(debug_assertions) {
-						let mut buf = Vec::new();
-
-						// NOTE: le fait de lire la réponse d'une seule traite
-						// fait que le système devient un peu plus lent sur des
-						// gros jeux de données. Cela va de soi.
-						response.read_to_end(&mut buf)?;
-
-						let raw_content = std::str::from_utf8(&buf)?;
-
-						let doc =
-							HTMLDocument::from_slice(&mut buf.as_slice())?;
-
-						let mut page_view =
-							self.build_page_view(&doc.elements)?;
-
-						page_view.raw_content = raw_content.to_string();
-						page_view
-					}
-					else {
-						let doc = HTMLDocument::from_stream(&mut response)?;
-						self.build_page_view(&doc.elements)?
-					};
-					*/
-
+					let page_view = self.build_page_view(&doc.elements)?;
 					return Ok(page_view);
 				}
 
-				Err(PageError::InvalidReq {
-					status: response.status(),
-				})
+				if content_type_str.contains("text/plain") {
+					let content = response.text()?;
+					let text_el = text(&content).into_any();
+					let page_view = PageView {
+						dyn_content: Some(stack_from_iter([text_el])),
+						new_title: Default::default(),
+						raw_content: Default::default(),
+						debugging: false,
+					};
+					return Ok(page_view);
+				}
+
+				Err(PageError::InvalidReq { status })
 			})
 	}
 }
@@ -192,6 +186,7 @@ impl Page
 			raw_content: Default::default(),
 			new_title: Default::default(),
 			dyn_content: Default::default(),
+			debugging: Default::default(),
 		};
 
 		let mut make_element =

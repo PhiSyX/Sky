@@ -10,14 +10,7 @@
 
 use sky_floem::cosmic_text::Style;
 use sky_floem::style::TextOverflow;
-use sky_floem::views::{
-	dyn_container,
-	h_stack,
-	scroll,
-	text,
-	v_stack,
-	Decorators,
-};
+use sky_floem::views::{dyn_container, h_stack, text, v_stack, Decorators};
 use sky_floem::{reactive, AnyView, IntoView, ScrollableExt, View};
 
 use crate::state::{ApplicationStateShared, Page};
@@ -43,11 +36,9 @@ impl ContentArea
 			| Ok(page_view) => {
 				state.title_data.set_title(page_view.new_title);
 
-				let Some(dyn_content) = page_view.dyn_content else {
-					return text("").into_any();
-				};
+				let dyn_content = page_view.dyn_content.expect("?");
 
-				if cfg!(debug_assertions) {
+				if page_view.debugging {
 					let left_content = v_stack((
 						text("Prévisualisation du rendu") // don't format please
 							.style(|style| {
