@@ -86,18 +86,18 @@ impl Application
 			let view_id = view.id();
 			view
 				// NOTE: inspection
-				.on_key_down(
+				.on_key_up(
 					keyboard::Key::Named(keyboard::NamedKey::F11),
 					keyboard::Modifiers::empty(),
 					move |_| view_id.inspect(),
 				)
 				// NOTE: fermeture
-				.on_key_down(
+				.on_key_up(
 					keyboard::Key::Named(keyboard::NamedKey::Escape),
 					keyboard::Modifiers::empty(),
 					move |_| window::close_window(window_id),
 				)
-				.on_key_down(
+				.on_key_up(
 					keyboard::Key::Character("c".into()),
 					keyboard::Modifiers::CONTROL,
 					move |_| window::close_window(window_id),

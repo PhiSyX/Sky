@@ -7,7 +7,7 @@ edition = { workspace = true }
 sky-html = { workspace= true }
 sky-ui = { workspace = true }
 
-floem = { git = "https://github.com/SerialForker/floem.git", rev = "8f5a9c5c2bee1bb0355c7a058b6e39be42878534" }
+floem = { git = "https://github.com/SerialForker/floem.git", rev = "7a52781d6fbe2de7a1219143d6e1c40b1adf7c46" }
 
 paste = { version = "1.0.14" }
 reqwest = { version = "0.12.4", features = ["blocking"] }
