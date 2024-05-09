@@ -24,6 +24,8 @@ use self::app::Application;
 
 fn main()
 {
-	let app: Application = Application::new().window_title("Sky");
+	let app: Application = Application::new()
+		.window_size((1000, 500))
+		.window_title("Sky");
 	app.run();
 }

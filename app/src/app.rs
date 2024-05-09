@@ -14,7 +14,7 @@ use floem::peniko::Color;
 use floem::views::{h_stack, v_stack, Decorators};
 use floem::window::{WindowConfig, WindowId};
 use floem::{keyboard, reactive, style, window, View};
-use sky_ui::ApplicationSettings;
+use sky_ui::{ApplicationSettings, Size};
 
 use crate::components::header::area::HeaderArea;
 use crate::components::icons::*;
@@ -62,6 +62,12 @@ impl Application
 		}
 	}
 
+	pub fn window_size(mut self, default_size: impl Into<Size>) -> Self
+	{
+		self.settings.set_size(default_size);
+		self
+	}
+
 	pub fn window_title(mut self, default_title: impl ToString) -> Self
 	{
 		self.settings.set_title(default_title);
@@ -75,7 +81,7 @@ impl Application
 	pub fn run(self) -> impl Termination
 	{
 		let window_settings = WindowConfig::default()
-			.size((1000.0, 500.0))
+			.size(self.settings.size_tuple())
 			.title(self.settings.title())
 			// .apply_default_theme(false)
 			// .with_transparent(true)
@@ -135,8 +141,8 @@ impl Window
 
 	pub fn view(&self) -> impl View
 	{
-		let state: ApplicationStateShared =
-			reactive::use_context().expect("État de l'application");
+		let state: ApplicationStateShared = reactive::use_context() /* dfplz */
+			.expect("État de l'application");
 
 		let header_area = self.header.render();
 		let nav_area = self.nav.render();

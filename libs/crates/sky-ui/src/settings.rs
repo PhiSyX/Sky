@@ -20,7 +20,11 @@ pub struct ApplicationSettings
 {
 	theme: ThemeSettings,
 	title: String,
+	size: Size,
 }
+
+#[derive(Debug)]
+pub struct Size(/* width */ f64, /* height */ f64);
 
 // ----------- //
 // Énumération //
@@ -64,6 +68,24 @@ impl ApplicationSettings
 
 impl ApplicationSettings
 {
+	pub fn size(&self) -> &Size
+	{
+		&self.size
+	}
+
+	pub fn size_tuple(&self) -> (f64, f64)
+	{
+		(self.size.0, self.size.1)
+	}
+
+	pub fn set_size(&mut self, size: impl Into<Size>)
+	{
+		self.size = size.into();
+	}
+}
+
+impl ApplicationSettings
+{
 	pub fn title(&self) -> &str
 	{
 		&self.title
@@ -74,3 +96,32 @@ impl ApplicationSettings
 		self.title = title.to_string();
 	}
 }
+
+// -------------- //
+// Implémentation // -> Interface
+// -------------- //
+
+impl Default for Size
+{
+	fn default() -> Self
+	{
+		Self(1000.0, 500.0)
+	}
+}
+
+macro_rules! into_size {
+	($($ty:ty),*) => {
+$(
+impl From<($ty, $ty)> for Size
+{
+	fn from(value: ($ty, $ty)) -> Self
+	{
+		Self(value.0 as _, value.1 as _)
+	}
+}
+)*
+	};
+}
+
+into_size!(u8, i8, u16, i16, u32, i32, u64, i64);
+into_size!(f32, f64);
