@@ -178,7 +178,7 @@ impl Page
 
 				if content_type_str.contains("text/plain") {
 					let content = response.text()?;
-					let text_el = text(&content).into_any();
+					let text_el = text(content).into_any();
 					let page_view = PageView {
 						dyn_content: Some(stack_from_iter([text_el])),
 						new_title: Default::default(),
@@ -319,8 +319,6 @@ impl Page
 		Ok(temp_page_view)
 	}
 
-	// FIXME: le clique fonctionne, mais ne change pas de page.
-	// Mettre en place, un système de d'échange de message (Actor Pattern?).
 	fn make_anchor_element(
 		maybe_text: Option<&str>,
 		attrs: &[Attribute],
@@ -344,6 +342,16 @@ impl Page
 						reactive::use_context().expect("État de l'application");
 
 					if state.pages_data.current_page.get().is_file() {
+						if rel_abs_url.starts_with("http") {
+							if let Ok(url) = rel_abs_url.parse() {
+								state
+									.pages_data
+									.current_page
+									.set(Page::Url(url));
+								return;
+							}
+						}
+
 						state.pages_data.current_page.set(Page::File(
 							path::Path::new(&rel_abs_url).to_owned(),
 						));
