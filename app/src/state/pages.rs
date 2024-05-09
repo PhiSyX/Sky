@@ -15,10 +15,21 @@ use std::path;
 use reqwest::StatusCode;
 use sky_floem::cosmic_text::Style;
 use sky_floem::peniko::Color;
-use sky_floem::reactive::{create_rw_signal, RwSignal};
-use sky_floem::views::{button, stack_from_iter, text, Decorators, Stack};
+use sky_floem::reactive::{self, create_rw_signal, RwSignal};
+use sky_floem::style::CursorStyle;
+use sky_floem::views::{
+	button,
+	stack_from_iter,
+	static_label,
+	text,
+	tooltip,
+	Decorators,
+	Stack,
+};
 use sky_floem::{AnyView, IntoView};
 use sky_html::{Attribute, HTMLDocument, HTMLElement};
+
+use crate::state::ApplicationStateShared;
 
 // --------- //
 // Structure //
@@ -91,9 +102,19 @@ impl Page
 	pub fn render(&self) -> Result<PageView, PageError>
 	{
 		match self {
-			| Page::File(page_path) => self.open_file(page_path),
-			| Page::Url(url) => self.fetch(url),
+			| Self::File(page_path) => self.open_file(page_path),
+			| Self::Url(url) => self.fetch(url),
 		}
+	}
+
+	pub fn is_file(&self) -> bool
+	{
+		matches!(self, Self::File(_))
+	}
+
+	pub fn is_url(&self) -> bool
+	{
+		matches!(self, Self::Url(_))
 	}
 
 	pub fn open_file(
@@ -169,6 +190,21 @@ impl Page
 
 				Err(PageError::InvalidReq { status })
 			})
+	}
+
+	pub fn url(&mut self) -> &mut url::Url
+	{
+		assert!(self.is_url());
+		let Self::Url(url) = self else { unreachable!() };
+		url
+	}
+
+	pub fn url_to_display(&self) -> String
+	{
+		match self {
+			| Page::File(p) => format!("{}", p.display()),
+			| Page::Url(u) => u.to_string(),
+		}
 	}
 }
 
@@ -295,13 +331,52 @@ impl Page
 				attr.name.local.eq("href").then_some(attr.value.to_string())
 			});
 
-			let mut element =
-				text(s.trim()).style(|style| style.color(Color::STEEL_BLUE));
+			let mut element = text(s.trim())
+				.style(|style| {
+					style.color(Color::STEEL_BLUE).cursor(CursorStyle::Pointer)
+				})
+				.into_any();
 
-			if let Some(url) = href {
+			if let Some(rel_abs_url) = href {
+				let title = rel_abs_url.clone();
 				element = element.on_click_cont(move |_| {
-					println!("Clique sur le lien: {url}");
+					let state: ApplicationStateShared =
+						reactive::use_context().expect("État de l'application");
+
+					if state.pages_data.current_page.get().is_file() {
+						state.pages_data.current_page.set(Page::File(
+							path::Path::new(&rel_abs_url).to_owned(),
+						));
+						return;
+					}
+
+					if let Ok(url) = rel_abs_url.parse::<url::Url>().or_else(
+						|_| -> Result<url::Url, url::ParseError> {
+							let mut st = state.pages_data.current_page.get();
+							let current_url = st.url();
+
+							let url = if rel_abs_url.starts_with('/') {
+								current_url.set_path(&rel_abs_url);
+								current_url.clone()
+							} else if rel_abs_url.starts_with('.') {
+								current_url.join(&rel_abs_url)?;
+								current_url.clone()
+							} else {
+								rel_abs_url.parse()?
+							};
+
+							Ok(url.clone())
+						},
+					) {
+						state.pages_data.current_page.set(Page::Url(url));
+					}
 				});
+
+				element = tooltip(
+					element, // don't format please
+					move || static_label(&title),
+				)
+				.into_any();
 			}
 
 			element.into_any()

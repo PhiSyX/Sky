@@ -37,6 +37,11 @@ impl URLBar
 
 		let url_s = reactive::create_rw_signal(String::new());
 
+		let state_w = ApplicationStateShared::clone(&state);
+		reactive::create_effect(move |_| {
+			url_s.set(state_w.pages_data.current_page.get().url_to_display());
+		});
+
 		let open_url_handler = {
 			let state_w = ApplicationStateShared::clone(&state);
 
