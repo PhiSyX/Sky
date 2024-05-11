@@ -12,6 +12,7 @@ use std::collections::BTreeMap;
 use std::io::Read;
 use std::path;
 
+use reqwest::header::HeaderMap;
 use reqwest::StatusCode;
 use sky_floem::cosmic_text::Style;
 use sky_floem::peniko::Color;
@@ -75,6 +76,8 @@ pub enum PageError
 	{
 		status: StatusCode
 	},
+	#[error("{0}")]
+	InvalidReqHeader(#[from] reqwest::header::InvalidHeaderValue),
 	#[error("Impossible d'analyser l'HTML: {0}")]
 	ParseHTML(#[from] sky_html::HTMLParserError),
 	#[error("Impossible de convertir en UTF-8: {0}")]
@@ -157,7 +160,24 @@ impl Page
 
 	pub fn fetch(&self, url: impl ToString) -> Result<PageView, PageError>
 	{
-		reqwest::blocking::get(url.to_string())
+		let mut req_headers = HeaderMap::new();
+
+		req_headers.insert("Accept", "text/html".parse()?);
+
+		// HACK: simule une fausse en-tête `User-Agent`.
+		req_headers.insert(
+			"User-Agent",
+			"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) \
+			 Gecko/20100101 Firefox/125.0"
+				.parse()?,
+		);
+
+		let client = reqwest::blocking::ClientBuilder::new()
+			.default_headers(req_headers)
+			.build()?;
+		client
+			.get(url.to_string())
+			.send()
 			.map_err(PageError::Req)
 			.and_then(|mut response| {
 				let content_type =
